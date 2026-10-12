@@ -1228,7 +1228,7 @@ input[type=number]{text-align:right}
                   <option value="1">1.0</option>
                   <option value="1.15">1.15</option>
                   <option value="1.5">1.5</option>
-                  <option value="2" >2.0</option>
+                  <option value="2" selected>2.0</option>
                 </select>
               </label>
             </div>
@@ -5658,7 +5658,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     var paper = ($('mgPaper').value || '210x297').split('x').map(Number);
     return {
       top: +$('mgTop').value || 25, left: +$('mgLeft').value || 30, right: +$('mgRight').value || 20,
-      font: +$('mgFont').value || 16, line: +$('mgLine').value || 1,
+      font: +$('mgFont').value || 16, line: +$('mgLine').value || 2,
       face: $('mgFontFace').value, pw: paper[0], ph: paper[1]
     };
   }
