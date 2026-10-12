@@ -2088,7 +2088,33 @@ function tryParseStructuredLine(tokens, unitPattern){
 
   if(isNaN(qty) || isNaN(price) || qty <= 0 || price <= 0) return null;
 
-  return {desc: desc, qty: qty, unit: unit, price: price, _selected: true};
+  // คอลัมน์หลังราคา/หน่วย อาจมี "ส่วนลด" ตามด้วย "จำนวนเงิน" รวมท้ายแถว (เช่น ...ราคา/หน่วย|ส่วนลด|จำนวนเงิน)
+  // ต้องแยกว่าตัวเลขที่เจอเป็นส่วนลดจริงหรือเป็นแค่จำนวนเงินรวม (ไม่มีส่วนลด) — ถ้าเจอตัวเลข 2 ตัวขึ้นไป
+  // หลังราคา/หน่วย ตัวแรกคือส่วนลด ถ้าเจอตัวเดียวถือว่าเป็นจำนวนเงินรวมเฉยๆ ไม่ใช่ส่วนลด
+  var discountPercent = null;
+  tokens.slice(priceIdx+1).forEach(function(t){
+    if(discountPercent === null){
+      var pctMatch = cleanNumericToken(t).match(/^(\d+(?:\.\d+)?)\s*%$/);
+      if(pctMatch) discountPercent = parseFloat(pctMatch[1]);
+    }
+  });
+  var tailNums = numIdx.filter(function(i){ return i > priceIdx; })
+    .map(function(i){ return parseFloat(normalizeOcrNumberToken(tokens[i])); });
+
+  var finalPrice = price, discountNote = null;
+  if(discountPercent !== null && discountPercent > 0 && discountPercent < 100){
+    finalPrice = Math.round(price * (1 - discountPercent/100) * 100) / 100;
+    discountNote = 'ส่วนลด ' + discountPercent + '% (เดิม ' + price.toFixed(2) + ')';
+  } else if(tailNums.length >= 2){
+    var lineTotal = qty * price;
+    var discountAmt = tailNums[0];
+    if(discountAmt > 0 && discountAmt < lineTotal){
+      finalPrice = Math.round(((lineTotal - discountAmt) / qty) * 100) / 100;
+      discountNote = 'ส่วนลด ' + discountAmt.toFixed(2) + ' บาท/แถว (เดิม ' + price.toFixed(2) + ')';
+    }
+  }
+
+  return {desc: desc, qty: qty, unit: unit, price: finalPrice, discountNote: discountNote, _selected: true};
 }
 
 // พยายามแกะบรรทัดที่ข้อความ/ตัวเลข/หน่วยติดกัน เช่น "ดินสอ 10 ด้าม 20.00"
@@ -2483,6 +2509,7 @@ function renderQuoteResultRows(items){
       '<td style="padding:4px 6px">'+
         '<input value="'+(it.desc||'').replace(/"/g,'&quot;')+'" style="width:100%;border:1px solid #e0d0f0;border-radius:4px;padding:3px 6px;font-size:13px" '+
         'onchange="window._quoteResultItems['+i+'].desc=this.value">'+
+        (it.discountNote ? '<div style="font-size:11px;color:#2e7d32;margin-top:2px">🏷️ '+escapeHtml(it.discountNote)+' — คำนวณราคา/หน่วยหลังหักส่วนลดแล้ว</div>' : '')+
       '</td>'+
       '<td style="padding:4px 6px">'+
         '<input type="number" value="'+(it.qty||1)+'" min="0.01" step="0.01" style="width:100%;border:1px solid #e0d0f0;border-radius:4px;padding:3px 6px;font-size:13px;text-align:right" '+
