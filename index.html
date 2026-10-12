@@ -1989,8 +1989,11 @@ function copyItemsFrom1(){f2_items=JSON.parse(JSON.stringify(f1_items));window.i
 function normalizeOcrText(text){
   var thaiDigits = '๐๑๒๓๔๕๖๗๘๙';
   text = text.replace(/[๐-๙]/g, function(ch){ return String(thaiDigits.indexOf(ch)); });
-  text = text.replace(/[|｜‖]/g, ' ');
-  text = text.replace(/[ \t]+/g, ' ');
+  // เส้นตารางที่ OCR อ่านเป็นอักขระ — แทนด้วยช่องว่าง 2 ตัวเสมอ เพื่อให้ยังนับเป็นจุดแบ่งคอลัมน์ได้
+  text = text.replace(/[|｜‖]/g, '  ');
+  // รวมช่องว่าง/แท็บติดกันให้เป็นมาตรฐาน แต่ "คงสัญญาณ" ว่าเดิมเป็นช่องว่างเดี่ยว (คั่นคำ) หรือหลายตัว
+  // (คั่นคอลัมน์ตาราง) ไว้ — ถ้ายุบเหลือช่องว่างเดียวหมด tokenizer จะแยกคอลัมน์ตารางไม่ออก
+  text = text.replace(/[ \t]+/g, function(run){ return run.length >= 2 ? '  ' : ' '; });
   return text;
 }
 
@@ -1999,13 +2002,30 @@ function cleanNumericToken(t){
   return t.replace(/[Oo]/g,'0').replace(/[lI]/g,'1');
 }
 
+// รวม token ตัวเลขให้เป็นรูปแบบมาตรฐาน: ตัด comma คั่นหลักพันออก และแก้กรณี OCR อ่านจุดคั่นหลักพัน
+// ผิดเป็นจุดทศนิยม (เช่น "17,120.00" อ่านเพี้ยนเป็น "17.120.00") — ถ้ามีจุดมากกว่า 1 ตัว ให้ถือว่า
+// จุดสุดท้ายคือทศนิยมก็ต่อเมื่อมีเลขตามหลัง 1-2 หลัก (ลักษณะสตางค์) มิฉะนั้นถือว่าทุกจุดคือตัวคั่นหลักพัน
+function normalizeOcrNumberToken(t){
+  var cleaned = cleanNumericToken(t.replace(/,/g,''));
+  var parts = cleaned.split('.');
+  if(parts.length > 2){
+    var lastPart = parts[parts.length-1];
+    if(lastPart.length <= 2){
+      cleaned = parts.slice(0,-1).join('') + '.' + lastPart;
+    } else {
+      cleaned = parts.join('');
+    }
+  }
+  return cleaned;
+}
+
 function parseQuoteTextToItems(rawText){
   rawText = normalizeOcrText(rawText);
   var lines = rawText.split(/\n+/).map(function(l){return l.trim();}).filter(Boolean);
   var results = [];
 
   // คำที่เป็นหัวตาราง/ป้ายกำกับ/คำสรุปยอด ให้ข้ามทั้งบรรทัด
-  var skipLineWords = /(รวมเป็นเงิน|รวมทั้งสิ้น|ภาษีมูลค่าเพิ่ม|จำนวนเงินรวม|ใบเสนอราคา|quotation|เลขที่|เลขประจำตัว|โทร\.?|tel|fax|วันที่|date|page|หน้า|grand\s*total|sub\s*total|vat\s*7|ที่อยู่|address)/i;
+  var skipLineWords = /(รวมเป็นเงิน|รวมเงิน|รวมทั้งสิ้น|ภาษีมูลค่าเพิ่ม|จำนวนเงินรวม|จำนวนเงินทั้งสิ้น|ส่วนลดการค้า|เงินหลังหักส่วนลด|ใบเสนอราคา|quotation|เลขที่|เลขประจำตัว|โทร\.?|tel|fax|วันที่|กำหนดส่ง|ยืนราคา|เครดิต|ผู้ติดต่อ|ชื่อบริษัท|ผู้อนุมัติ|พนักงานขาย|ฝ่ายขาย|หมายเหตุ|date|page|หน้า|grand\s*total|sub\s*total|vat\s*7|ที่อยู่|address)/i;
 
   // หน่วยนับที่พบบ่อยในใบเสนอราคาไทย — ใช้ระบุตำแหน่ง "หน่วย" ในบรรทัดให้แม่นยำ
   var unitWords = ['ชิ้น','อัน','ชุด','กล่อง','แพ็ค','แพค','ม้วน','เล่ม','ใบ','แผ่น','ด้าม',
@@ -2032,30 +2052,38 @@ function parseQuoteTextToItems(rawText){
   return results;
 }
 
-// พยายามจับคู่ tokens ที่แยกด้วยช่องว่าง/แท็บแบบตาราง: [รายการ] [จำนวน] [หน่วย] [ราคา]
+// พยายามจับคู่ tokens ที่แยกด้วยช่องว่าง/แท็บแบบตาราง
+// รองรับทั้งตาราง 4 คอลัมน์ [รายการ][จำนวน][หน่วย][ราคา] และตารางที่มีคอลัมน์เพิ่ม เช่น
+// [รหัสสินค้า][รายการ][จำนวน][หน่วย][ราคา/หน่วย][ส่วนลด][จำนวนเงิน] — โดยยึดตำแหน่ง "หน่วย" เป็นหลัก
+// จำนวน = ตัวเลขตัวที่อยู่ติดก่อนหน่วย, ราคา/หน่วย = ตัวเลขตัวแรกหลังหน่วย (ไม่ใช่ตัวเลขตัวสุดท้ายของบรรทัด
+// ซึ่งอาจเป็นส่วนลดหรือจำนวนเงินรวมของแถวนั้นแทน)
 function tryParseStructuredLine(tokens, unitPattern){
   if(tokens.length < 3) return null;
 
-  // หาตำแหน่ง token ที่เป็นตัวเลขล้วน (จำนวน/ราคา) และ token ที่เป็นหน่วยนับ
+  // หาตำแหน่ง token ที่เป็นตัวเลขล้วน และตำแหน่งหน่วยนับตัวแรกที่เจอ (ใช้เป็นจุดยึด)
   var numIdx = [];
   var unitIdx = -1;
   tokens.forEach(function(t, i){
-    var cleaned = cleanNumericToken(t.replace(/,/g,''));
+    var cleaned = normalizeOcrNumberToken(t);
     if(/^\d+\.?\d*$/.test(cleaned)) numIdx.push(i);
-    else if(unitPattern.test(t)) unitIdx = i;
+    else if(unitIdx < 0 && unitPattern.test(t)) unitIdx = i;
   });
 
-  // ต้องมีตัวเลขอย่างน้อย 2 ตัว (จำนวน + ราคา) และมีหน่วยนับชัดเจน
   if(numIdx.length < 2 || unitIdx < 0) return null;
 
-  // รายการ คือ tokens ก่อนตัวเลขตัวแรก
-  var firstNumIdx = numIdx[0];
-  var descTokens = tokens.slice(0, firstNumIdx);
+  // จำนวน = ตัวเลขตัวสุดท้ายก่อนหน่วย, ราคา/หน่วย = ตัวเลขตัวแรกหลังหน่วย
+  var qtyIdx = -1, priceIdx = -1, k;
+  for(k=0; k<numIdx.length; k++){ if(numIdx[k] < unitIdx) qtyIdx = numIdx[k]; }
+  for(k=0; k<numIdx.length; k++){ if(numIdx[k] > unitIdx){ priceIdx = numIdx[k]; break; } }
+  if(qtyIdx < 0 || priceIdx < 0) return null;
+
+  // รายการ คือ tokens ก่อนตัวเลข "จำนวน" (รวม รหัสสินค้า ถ้ามี)
+  var descTokens = tokens.slice(0, qtyIdx);
   var desc = descTokens.join(' ').replace(/^[-–—•.\s\d]+/, '').trim();
   if(!desc || desc.length < 2 || desc.length > 80) return null;
 
-  var qty = parseFloat(cleanNumericToken(tokens[numIdx[0]].replace(/,/g,'')));
-  var price = parseFloat(cleanNumericToken(tokens[numIdx[numIdx.length-1]].replace(/,/g,'')));
+  var qty = parseFloat(normalizeOcrNumberToken(tokens[qtyIdx]));
+  var price = parseFloat(normalizeOcrNumberToken(tokens[priceIdx]));
   var unit = tokens[unitIdx];
 
   if(isNaN(qty) || isNaN(price) || qty <= 0 || price <= 0) return null;
@@ -2070,19 +2098,21 @@ function tryParseInlineLine(line, unitPattern){
     'รีม','ขวด','ถุง','กระป๋อง','ตัว','คัน','เครื่อง','เมตร','ม\\.','กก\\.','กิโลกรัม','ลิตร',
     'งาน','คู่','โหล','แกลลอน','หลอด','ก้อน','set','pcs','pc','box','roll','unit','ea'].join('|') + ')';
 
-  // อนุญาตตัวอักษร O/o/l/I ปนในกลุ่มตัวเลข เพราะ OCR มักอ่านผิดเป็นตัวอักษรเหล่านี้แทน 0/1
-  var numAlt = '[\\dOolI,]+\\.?[\\dOolI]*';
+  // อนุญาตตัวอักษร O/o/l/I ปนในกลุ่มตัวเลข (OCR อ่านผิดแทน 0/1) และจุดได้มากกว่า 1 ตัว
+  // (OCR บางครั้งอ่านจุดคั่นหลักพันผิดจาก comma เป็น period เช่น "17,120.00" กลายเป็น "17.120.00")
+  var numAlt = '[\\dOolI,]+(?:\\.[\\dOolI]+)*';
+  // ท้ายบรรทัดอาจมีคอลัมน์ส่วนลด/จำนวนเงินต่อท้ายราคา/หน่วย จึงไม่บังคับให้จบทันทีหลังราคา
   var re = new RegExp(
-    '^(.{2,80}?)\\s+(' + numAlt + ')\\s*' + unitAlt + '\\s+(' + numAlt + ')\\s*(?:บาท)?$',
+    '^(.{2,80}?)\\s+(' + numAlt + ')\\s*' + unitAlt + '\\s+(' + numAlt + ')\\s*(?:บาท)?(?:\\s+.*)?$',
     'i'
   );
   var m = line.match(re);
   if(!m) return null;
 
   var desc = m[1].replace(/^[-–—•.\s\d]+/, '').trim();
-  var qty = parseFloat(cleanNumericToken(m[2].replace(/,/g,'')));
+  var qty = parseFloat(normalizeOcrNumberToken(m[2]));
   var unit = m[3];
-  var price = parseFloat(cleanNumericToken(m[4].replace(/,/g,'')));
+  var price = parseFloat(normalizeOcrNumberToken(m[4]));
 
   if(!desc || desc.length < 2) return null;
   if(isNaN(qty) || isNaN(price) || qty <= 0 || price <= 0) return null;
