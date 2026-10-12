@@ -4162,7 +4162,16 @@ function initKeycloak(){
     return;
   }
   keycloakClient = new Keycloak(KEYCLOAK_CONFIG);
-  keycloakClient.init({ onLoad:'check-sso', pkceMethod:'S256', checkLoginIframe:false })
+  // ใช้ iframe ที่ซ่อนอยู่สำหรับเช็ค SSO แทนการ redirect หน้าหลักทั้งหน้า —
+  // ถ้าไม่กำหนดค่านี้ไว้ keycloak-js จะ fallback ไป redirect หน้าหลักแทน ซึ่งพังทันทีถ้า URL ปัจจุบัน
+  // ไม่ตรงกับ Valid Redirect URI ที่ลงทะเบียนไว้เป๊ะๆ
+  var silentCheckSsoUri = location.href.substring(0, location.href.lastIndexOf('/') + 1) + 'silent-check-sso.html';
+  keycloakClient.init({
+    onLoad: 'check-sso',
+    pkceMethod: 'S256',
+    checkLoginIframe: false,
+    silentCheckSsoRedirectUri: silentCheckSsoUri
+  })
     .then(function(authenticated){
       var btn = document.getElementById('keycloakLoginBtn');
       if(btn) btn.disabled = false;

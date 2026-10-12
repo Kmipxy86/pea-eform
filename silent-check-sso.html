@@ -1,0 +1,12 @@
+<!doctype html>
+<!--
+  หน้านี้ใช้สำหรับ Keycloak silent SSO check เท่านั้น (onLoad: 'check-sso')
+  ถูกโหลดใน iframe ที่ซ่อนอยู่ ไม่ใช่หน้าที่ผู้ใช้เห็นโดยตรง — ห้ามใส่เนื้อหาอื่น
+-->
+<html>
+<body>
+<script>
+  parent.postMessage(location.href, location.origin);
+</script>
+</body>
+</html>
