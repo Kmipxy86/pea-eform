@@ -402,14 +402,6 @@ input[type=number]{text-align:right}
 .ab-progress{font-size:15px;color:var(--pea-text-muted);min-width:84px;text-align:center}
 .ab-spacer{flex:1}
 .toast{bottom:96px}
-/* preview modal */
-.modal-overlay{height:100vh;height:100dvh}
-.modal{height:100vh;height:100dvh}
-.modal-header-title{margin-right:12px}
-.ribbon-toggle{white-space:nowrap;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.12);color:#fff;border-radius:var(--radius-sm);padding:4px 12px;font-family:inherit;font-size:14px;cursor:pointer}
-.ribbon-toggle:hover{background:rgba(255,255,255,.25)}
-.modal-ribbon.collapsed{display:none}
-.modal-footer{align-items:center;flex-wrap:wrap}
 /* admin */
 .admin-quick{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:8px}
 .admin-modal,.lock-box{max-width:92vw}
@@ -454,11 +446,6 @@ input[type=number]{text-align:right}
   .form-control{min-height:44px}
   textarea.form-control{min-height:88px}
   [id^="lbl_f1vat_"]{padding:8px 10px!important;font-size:14px!important}
-  .modal-ribbon{max-height:45vh;overflow-y:auto}
-  .modal-header{gap:8px;padding:8px 12px}
-  .modal-header-title{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0}
-  .ribbon-toggle .rt-label,#zoomLabel,#pageInfo{display:none}
-  .modal-footer .btn{flex:1 1 auto}
   .admin-modal,.lock-box{padding:28px 20px}
   .org-info-grid{grid-template-columns:1fr}
   #page-admin>div:first-child{position:static!important}
@@ -485,6 +472,122 @@ input[type=number]{text-align:right}
   .page-head .btn{width:100%}
 }
 @media print{.form-actionbar,.sidebar-backdrop,.nav-menu-btn{display:none!important}}
+</style>
+
+<style id="pv-ribbon-css">
+/* ===== หน้าต่างตัวอย่างเอกสาร แบบ Ribbon ===== */
+.modal-overlay{height:100vh;height:100dvh;background:rgba(44,26,62,.55)}
+.modal.pv{background:#e9e5ee;height:100vh;height:100dvh;font-family:'TH SarabunPSK','TH SarabunIT๙','TH Sarabun New','Sarabun',sans-serif;color:var(--pea-text)}
+.pv svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.pv .pv-fill{fill:var(--pea-border-light);stroke:var(--pea-purple-light);stroke-dasharray:2 1.5}
+
+/* title bar */
+.pv-titlebar{display:flex;align-items:center;gap:16px;height:52px;padding:0 8px 0 18px;background:var(--pea-purple);color:#fff;flex-shrink:0}
+.pv-title{display:flex;align-items:center;gap:10px;min-width:0;flex:1;font-size:18px;font-weight:600}
+.pv-title #previewTitle{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pv-ico{opacity:.9}
+.pv-formswitch{display:flex;background:rgba(0,0,0,.18);border-radius:999px;padding:3px;gap:2px;flex-shrink:0}
+.pv-formswitch button{border:none;background:none;color:rgba(255,255,255,.85);font:inherit;font-size:15px;padding:4px 14px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.pv-formswitch button:hover{color:#fff;background:rgba(255,255,255,.12)}
+.pv-formswitch button.active{background:#fff;color:var(--pea-purple);font-weight:600}
+.pv-close{width:40px;height:40px;border:none;background:none;color:#fff;border-radius:var(--radius-sm);cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.pv-close:hover{background:var(--pea-danger)}
+
+/* ribbon tabs */
+.pv-tabs{display:flex;align-items:flex-end;gap:2px;padding:0 12px;background:var(--pea-purple-dark);flex-shrink:0;height:38px}
+.pv-tab{white-space:nowrap;flex-shrink:0;border:none;background:none;color:rgba(255,255,255,.8);font:inherit;font-size:16px;padding:6px 18px 7px;border-radius:8px 8px 0 0;cursor:pointer}
+.pv-tab:hover{color:#fff;background:rgba(255,255,255,.08)}
+.pv-tab.active{background:#fbfafd;color:var(--pea-purple);font-weight:600}
+.pv-tabs-hint{margin-left:auto;align-self:center;font-size:14px;color:rgba(255,255,255,.7);padding-right:8px}
+.pv-collapse{align-self:center;width:30px;height:30px;border:none;background:none;color:#fff;border-radius:var(--radius-sm);cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.pv-collapse svg{width:18px;height:18px;transition:transform .2s}
+.pv-collapse:hover{background:rgba(255,255,255,.12)}
+.pv.ribbon-collapsed .pv-collapse svg{transform:rotate(180deg)}
+.pv.ribbon-collapsed .pv-ribbon{display:none}
+
+.pv-quick{display:none;align-self:center;gap:4px}
+.pv-quick button{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.1);color:#fff;font:inherit;font-size:15px;border-radius:999px;cursor:pointer}
+.pv-quick button:hover{background:rgba(255,255,255,.22)}
+.pv-quick svg{width:16px;height:16px}
+.pv.ribbon-collapsed .pv-quick{display:inline-flex}
+.pv.ribbon-collapsed .pv-tabs-hint{display:none}
+/* ribbon body */
+.pv-ribbon{background:#fbfafd;border-bottom:1px solid var(--pea-border);box-shadow:0 2px 6px rgba(44,26,62,.06);flex-shrink:0;overflow-x:auto;position:relative;z-index:2}
+.pv-panel{display:none;align-items:stretch;min-height:104px;padding:6px 4px 0}
+.pv-panel.active{display:flex}
+.pv-group{display:flex;flex-direction:column;padding:0 12px;border-right:1px solid var(--pea-border-light);flex-shrink:0}
+.pv-group:last-child{border-right:none}
+.pv-group-body{flex:1;display:flex;align-items:center;gap:4px}
+.pv-group-label{font-size:13px;color:var(--pea-text-muted);text-align:center;padding:2px 0 5px;white-space:nowrap}
+.pv-stack{flex-direction:column;align-items:stretch;justify-content:center;gap:6px}
+.pv-row{display:flex;gap:10px}
+.pv-margins{flex-direction:column;align-items:flex-end;justify-content:center;gap:4px}
+
+.pv-big,.pv-mid,.pv-icon-btn{border:1px solid transparent;background:none;font:inherit;color:var(--pea-text);cursor:pointer;border-radius:var(--radius-sm);transition:background .12s,border-color .12s}
+.pv-big{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:64px;height:72px;padding:6px 8px;font-size:15px}
+.pv-big svg{width:30px;height:30px;color:var(--pea-purple)}
+.pv-mid{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:62px;height:66px;padding:4px 6px;font-size:14px;line-height:1.2;white-space:nowrap}
+.pv-mid svg{color:var(--pea-purple)}
+.pv-big:hover,.pv-mid:hover,.pv-icon-btn:hover{background:var(--pea-border-light);border-color:var(--pea-border)}
+.pv-big:active,.pv-mid:active,.pv-icon-btn:active{background:#e3dbee}
+.pv-big.pv-primary{background:var(--pea-purple);color:#fff}
+.pv-big.pv-primary svg{color:#fff}
+.pv-big.pv-primary:hover{background:var(--pea-purple-dark);border-color:var(--pea-purple-dark)}
+.pv-preset.active{background:var(--pea-border-light);border-color:var(--pea-purple-light)}
+.pv-icon-btn{width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center}
+.pv-icon-btn svg{width:20px;height:20px;color:var(--pea-purple)}
+.pv-zoom{display:flex;align-items:center;gap:2px;margin-right:4px}
+
+.pv-field{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--pea-text-muted);white-space:nowrap}
+.pv-field>span:first-child{min-width:44px;text-align:right}
+.pv select,.pv input[type=number]{font:inherit;font-size:15px;color:var(--pea-text);background:#fff;border:1px solid var(--pea-border);border-radius:6px;height:32px;padding:0 8px}
+.pv select{cursor:pointer;padding-right:4px}
+.pv #mgFontFace{min-width:170px}
+.pv select:hover,.pv input[type=number]:hover{border-color:var(--pea-purple-light)}
+.pv select:focus,.pv input[type=number]:focus{outline:none;border-color:var(--pea-purple);box-shadow:0 0 0 3px rgba(107,44,143,.15)}
+.pv-num{display:inline-flex;align-items:center;gap:4px;color:var(--pea-text-muted);font-size:14px}
+.pv-num input{width:62px;text-align:right}
+.pv button:focus-visible,.pv select:focus-visible,.pv input:focus-visible{outline:3px solid var(--pea-gold-light);outline-offset:1px}
+
+/* document area */
+.pv .modal-body{background:#e9e5ee}
+.pv .modal-body iframe{background:#e9e5ee!important}
+
+/* status bar */
+.pv-status{display:flex;align-items:center;gap:12px;height:34px;padding:0 14px;background:#fbfafd;border-top:1px solid var(--pea-border);font-size:14px;color:var(--pea-text-muted);flex-shrink:0;white-space:nowrap;overflow:hidden}
+.pv-status-sep{width:1px;height:16px;background:var(--pea-border)}
+#pageInfo{overflow:hidden;text-overflow:ellipsis}
+.pv-status-zoom{margin-left:auto;display:flex;align-items:center;gap:6px}
+.pv-status-zoom button{width:24px;height:24px;border:none;background:none;color:var(--pea-text);font-size:18px;line-height:1;border-radius:4px;cursor:pointer}
+.pv-status-zoom button:hover{background:var(--pea-border-light)}
+.pv-status-zoom input[type=range]{width:120px;accent-color:var(--pea-purple);cursor:pointer}
+#zoomLabel{min-width:44px;text-align:right;color:var(--pea-text)}
+
+@media (max-width:900px){
+  .pv-titlebar{gap:8px;padding:0 4px 0 12px;height:50px}
+  .pv-title{font-size:16px}
+  .pv-ico{display:none}
+  .pv-formswitch button{padding:4px 9px;font-size:14px}
+  .pv-tabs-hint{display:none}
+  .pv-collapse{margin-left:4px}
+  .pv-quick{display:inline-flex;margin-left:auto}
+  .pv-quick span{display:none}
+  .pv-quick button{padding:0 10px}
+  .pv-tab{padding:6px 12px 7px;font-size:15px}
+  .pv-tabs{padding:0 6px}
+  .pv-panel{min-height:96px}
+  .pv-group{padding:0 8px}
+  .pv-big{min-width:56px;height:66px}
+  .pv-mid{min-width:56px}
+  .pv-mid span{font-size:13px}
+  #pageInfo,.pv-status-sep{display:none}
+  .pv-status-zoom input[type=range]{width:90px}
+}
+@media (max-width:600px){
+  .pv-title{display:none}
+  .pv-formswitch{margin-right:auto}
+  .pv-formswitch button{padding:4px 10px}
+}
 </style>
 </head>
 <body>
@@ -1027,142 +1130,185 @@ input[type=number]{text-align:right}
 </main>
 </div>
 
-<!-- MODAL PREVIEW -->
-<div class="modal-overlay" id="previewModal">
-  <div class="modal">
+<!-- MODAL PREVIEW (ribbon window) -->
+<div class="modal-overlay" id="previewModal" role="dialog" aria-modal="true" aria-labelledby="previewTitle">
+  <div class="modal pv">
 
-    <!-- Title Bar -->
-    <div class="modal-header">
-      <span class="modal-header-title">📄 <span id="previewTitle">ตัวอย่างเอกสาร</span></span>
-      <button type="button" class="ribbon-toggle" onclick="toggleRibbon()">⚙️ <span class="rt-label">ตั้งค่าหน้ากระดาษ</span></button>
-      <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
-        <span style="font-size:11px;color:rgba(255,255,255,.7)" id="zoomLabel">100%</span>
-        <button class="btn-close" onclick="closeModal()" title="ปิด (Esc)">✕</button>
+    <!-- แถบชื่อเอกสาร -->
+    <div class="pv-titlebar">
+      <div class="pv-title">
+        <svg class="pv-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2.5h8l4.5 4.5v14.5H6z"/><path d="M14 2.5V7h4.5"/><path d="M9 12h6M9 15.5h6M9 19h4"/></svg>
+        <span id="previewTitle">ตัวอย่างเอกสาร</span>
+      </div>
+      <div class="pv-formswitch" role="tablist" aria-label="เลือกแบบฟอร์ม">
+        <button type="button" role="tab" data-form="1">แบบที่ ๑</button>
+        <button type="button" role="tab" data-form="2">แบบที่ ๒</button>
+        <button type="button" role="tab" data-form="3">แบบที่ ๓</button>
+      </div>
+      <button type="button" class="pv-close" onclick="closeModal()" title="ปิด (Esc)" aria-label="ปิดหน้าต่างตัวอย่าง">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+
+    <!-- แท็บ Ribbon -->
+    <div class="pv-tabs" role="tablist">
+      <button type="button" class="pv-tab active" role="tab" data-rtab="home" aria-selected="true">หน้าแรก</button>
+      <button type="button" class="pv-tab" role="tab" data-rtab="layout" aria-selected="false">เค้าโครงหน้า</button>
+      <span class="pv-tabs-hint">คลิกบนเอกสารเพื่อแก้ไขข้อความก่อนพิมพ์ได้</span>
+      <span class="pv-quick" aria-label="คำสั่งด่วน">
+        <button type="button" data-act="print" title="พิมพ์ / PDF (Ctrl+P)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8V3h10v5"/><rect x="3" y="8" width="18" height="9" rx="2"/><path d="M7 14h10v7H7z"/></svg><span>พิมพ์</span></button>
+        <button type="button" data-act="word" title="ดาวน์โหลดไฟล์ Word"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2.5h8l4.5 4.5v14.5H6z"/><path d="M14 2.5V7h4.5"/><path d="M8.5 11l1.5 6 2-4.5 2 4.5 1.5-6"/></svg><span>Word</span></button>
+      </span>
+      <button type="button" class="pv-collapse" id="pvCollapse" title="ย่อ / ขยาย Ribbon" aria-label="ย่อ หรือ ขยาย Ribbon" aria-expanded="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>
+      </button>
+    </div>
+
+    <div class="pv-ribbon" id="previewRibbon">
+
+      <!-- ===== หน้าแรก ===== -->
+      <div class="pv-panel active" data-rpanel="home" role="tabpanel">
+        <div class="pv-group">
+          <div class="pv-group-body">
+            <button type="button" class="pv-big pv-primary" data-act="print" title="พิมพ์ (Ctrl+P)">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8V3h10v5"/><rect x="3" y="8" width="18" height="9" rx="2"/><path d="M7 14h10v7H7z"/><circle cx="17.5" cy="11" r=".6"/></svg>
+              <span>พิมพ์</span>
+            </button>
+            <button type="button" class="pv-big" data-act="pdf" title="บันทึกเป็น PDF">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2.5h8l4.5 4.5v14.5H6z"/><path d="M14 2.5V7h4.5"/><path d="M12 10.5v6M9.5 14l2.5 2.5 2.5-2.5"/></svg>
+              <span>PDF</span>
+            </button>
+            <button type="button" class="pv-big" data-act="word" title="ดาวน์โหลดไฟล์ Word">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2.5h8l4.5 4.5v14.5H6z"/><path d="M14 2.5V7h4.5"/><path d="M8.5 11l1.5 6 2-4.5 2 4.5 1.5-6"/></svg>
+              <span>Word</span>
+            </button>
+          </div>
+          <div class="pv-group-label">ส่งออก</div>
+        </div>
+
+        <div class="pv-group">
+          <div class="pv-group-body">
+            <div class="pv-zoom">
+              <button type="button" class="pv-icon-btn" data-act="zoom-out" title="ซูมออก" aria-label="ซูมออก"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L20 20M7.5 10.5h6"/></svg></button>
+              <label class="pv-num"><input type="number" id="mgZoom" min="40" max="150" step="5" value="100" aria-label="ซูม เปอร์เซ็นต์"><span>%</span></label>
+              <button type="button" class="pv-icon-btn" data-act="zoom-in" title="ซูมเข้า" aria-label="ซูมเข้า"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L20 20M7.5 10.5h6M10.5 7.5v6"/></svg></button>
+            </div>
+            <button type="button" class="pv-mid" data-act="fit-width" title="พอดีความกว้าง">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="3" width="12" height="18" rx="1"/><path d="M2 12h4M18 12h4M4 10l-2 2 2 2M20 10l2 2-2 2"/></svg>
+              <span>พอดีความกว้าง</span>
+            </button>
+            <button type="button" class="pv-mid" data-act="fit-page" title="แสดงทั้งหน้า">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="3" width="12" height="18" rx="1"/><path d="M9 7h6M9 10h6M9 13h4"/></svg>
+              <span>ทั้งหน้า</span>
+            </button>
+            <button type="button" class="pv-mid" data-act="zoom-100" title="ขนาดจริง 100%">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M7.5 10v5M10.5 12.5a1.5 2 0 1 0 3 0a1.5 2 0 1 0-3 0M15 12.5a1.5 2 0 1 0 3 0a1.5 2 0 1 0-3 0"/></svg>
+              <span>ขนาดจริง</span>
+            </button>
+          </div>
+          <div class="pv-group-label">มุมมอง</div>
+        </div>
+
+        <div class="pv-group">
+          <div class="pv-group-body pv-stack">
+            <label class="pv-field"><span>ฟอนต์</span>
+              <select id="mgFontFace">
+                <option value="'TH SarabunIT๙','TH Sarabun New','Sarabun',sans-serif" selected>TH SarabunIT๙</option>
+                <option value="'TH SarabunPSK','TH Sarabun New','Sarabun',sans-serif">TH SarabunPSK</option>
+                <option value="'TH Sarabun New','Sarabun',sans-serif">TH Sarabun New</option>
+                <option value="'Sarabun',sans-serif">Sarabun</option>
+              </select>
+            </label>
+            <div class="pv-row">
+              <label class="pv-field"><span>ขนาด</span>
+                <span class="pv-num"><input type="number" id="mgFont" min="12" max="20" step="0.5" value="16"><span>pt</span></span>
+              </label>
+              <label class="pv-field"><span>บรรทัด</span>
+                <select id="mgLine">
+                  <option value="1">1.0</option>
+                  <option value="1.15">1.15</option>
+                  <option value="1.5">1.5</option>
+                  <option value="2" >2.0</option>
+                </select>
+              </label>
+            </div>
+          </div>
+          <div class="pv-group-label">ตัวอักษร</div>
+        </div>
+
+        <div class="pv-group">
+          <div class="pv-group-body">
+            <button type="button" class="pv-mid" data-act="reset" title="กลับไปใช้ค่ามาตรฐาน">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/></svg>
+              <span>ค่ามาตรฐาน</span>
+            </button>
+            <button type="button" class="pv-mid" data-act="save" title="จำค่านี้ไว้ใช้ครั้งต่อไป">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h11l3 3v15H5z"/><path d="M8 3v5h7V3M8 21v-7h8v7"/></svg>
+              <span>จำค่า</span>
+            </button>
+          </div>
+          <div class="pv-group-label">การตั้งค่า</div>
+        </div>
+      </div>
+
+      <!-- ===== เค้าโครงหน้า ===== -->
+      <div class="pv-panel" data-rpanel="layout" role="tabpanel">
+        <div class="pv-group">
+          <div class="pv-group-body">
+            <button type="button" class="pv-big pv-preset" data-preset="25,30,20" title="บน/ล่าง ๒.๕ ซม. · ซ้าย ๓ ซม. · ขวา ๒ ซม.">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="1"/><rect x="8" y="5" width="9.5" height="14" class="pv-fill"/></svg>
+              <span>สารบรรณ</span>
+            </button>
+            <button type="button" class="pv-big pv-preset" data-preset="25,25,25" title="ทุกด้าน ๒.๕ ซม.">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="1"/><rect x="7.5" y="5" width="9" height="14" class="pv-fill"/></svg>
+              <span>เท่ากัน</span>
+            </button>
+            <button type="button" class="pv-big pv-preset" data-preset="15,20,15" title="บน/ล่าง ๑.๕ ซม. · ซ้าย ๒ ซม. · ขวา ๑.๕ ซม.">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="1"/><rect x="6.5" y="4" width="11.5" height="16" class="pv-fill"/></svg>
+              <span>แคบ</span>
+            </button>
+          </div>
+          <div class="pv-group-label">ระยะขอบสำเร็จรูป</div>
+        </div>
+
+        <div class="pv-group">
+          <div class="pv-group-body pv-margins">
+            <label class="pv-field"><span>บน/ล่าง</span><span class="pv-num"><input type="number" id="mgTop" min="5" max="50" step="1" value="25"><span>มม.</span></span></label>
+            <label class="pv-field"><span>ซ้าย</span><span class="pv-num"><input type="number" id="mgLeft" min="10" max="50" step="1" value="30"><span>มม.</span></span></label>
+            <label class="pv-field"><span>ขวา</span><span class="pv-num"><input type="number" id="mgRight" min="5" max="40" step="1" value="20"><span>มม.</span></span></label>
+          </div>
+          <div class="pv-group-label">ระยะขอบกำหนดเอง</div>
+        </div>
+
+        <div class="pv-group">
+          <div class="pv-group-body pv-stack">
+            <label class="pv-field"><span>ขนาดกระดาษ</span>
+              <select id="mgPaper">
+                <option value="210x297" selected>A4 (210 × 297 มม.)</option>
+                <option value="216x279">Letter (216 × 279 มม.)</option>
+                <option value="215x330">F4 / Folio (215 × 330 มม.)</option>
+              </select>
+            </label>
+          </div>
+          <div class="pv-group-label">กระดาษ</div>
+        </div>
       </div>
     </div>
 
-    <!-- Ribbon Toolbar MS Word style -->
-    <div class="modal-ribbon" id="previewRibbon">
-
-      <!-- กลุ่ม: ระยะขอบ -->
-      <div class="ribbon-group">
-        <span class="ribbon-group-label">ระยะขอบ (มม.)</span>
-        <div class="ribbon-group-inner">
-          <div class="ribbon-ctrl">
-            <label>บน/ล่าง</label>
-            <div class="spin-wrap">
-              <input type="number" id="mgTop" min="5" max="50" value="25" step="1" oninput="syncSlider('mgTop');updatePageMargins()">
-              <input type="range"  id="mgTopR" min="5" max="50" value="25" step="1" oninput="syncNum('mgTop');updatePageMargins()">
-            </div>
-          </div>
-          <div class="ribbon-ctrl">
-            <label>ซ้าย</label>
-            <div class="spin-wrap">
-              <input type="number" id="mgLeft" min="10" max="50" value="30" step="1" oninput="syncSlider('mgLeft');updatePageMargins()">
-              <input type="range"  id="mgLeftR" min="10" max="50" value="30" step="1" oninput="syncNum('mgLeft');updatePageMargins()">
-            </div>
-          </div>
-          <div class="ribbon-ctrl">
-            <label>ขวา</label>
-            <div class="spin-wrap">
-              <input type="number" id="mgRight" min="5" max="40" value="20" step="1" oninput="syncSlider('mgRight');updatePageMargins()">
-              <input type="range"  id="mgRightR" min="5" max="40" value="20" step="1" oninput="syncNum('mgRight');updatePageMargins()">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- กลุ่ม: ฟอนต์ -->
-      <div class="ribbon-group">
-        <span class="ribbon-group-label">ตัวอักษร</span>
-        <div class="ribbon-group-inner">
-          <div class="ribbon-ctrl">
-            <label>ฟอนต์</label>
-            <select id="mgFontFace" onchange="updatePageMargins()" style="width:130px">
-              <option value="'TH SarabunIT๙','TH Sarabun New','Sarabun',sans-serif" selected>TH SarabunIT๙</option>
-              <option value="'TH Sarabun New','Sarabun',sans-serif">TH Sarabun New</option>
-              <option value="'Sarabun',sans-serif">Sarabun</option>
-              <option value="'AngsanaUPC',serif">AngsanaUPC</option>
-            </select>
-          </div>
-          <div class="ribbon-ctrl">
-            <label>ขนาด (pt)</label>
-            <div class="spin-wrap">
-              <input type="number" id="mgFont" min="8" max="24" value="16" step="0.5" oninput="syncSlider('mgFont');updatePageMargins()">
-              <input type="range"  id="mgFontR" min="8" max="24" value="16" step="0.5" oninput="syncNum('mgFont');updatePageMargins()">
-            </div>
-          </div>
-          <div class="ribbon-ctrl">
-            <label>บรรทัด</label>
-            <div class="spin-wrap">
-              <input type="number" id="mgLine" min="1.0" max="3.0" value="1.5" step="0.05" oninput="syncSlider('mgLine');updatePageMargins()">
-              <input type="range"  id="mgLineR" min="1.0" max="3.0" value="1.5" step="0.05" oninput="syncNum('mgLine');updatePageMargins()">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- กลุ่ม: หน้ากระดาษ -->
-      <div class="ribbon-group">
-        <span class="ribbon-group-label">หน้ากระดาษ</span>
-        <div class="ribbon-group-inner">
-          <div class="ribbon-ctrl">
-            <label>ขนาด</label>
-            <select id="mgPaper" onchange="updatePageMargins()">
-              <option value="210x297" selected>A4</option>
-              <option value="216x279">Letter</option>
-              <option value="215x330">F4</option>
-            </select>
-          </div>
-          <div class="ribbon-ctrl">
-            <label>ซูม (%)</label>
-            <div class="spin-wrap">
-              <input type="number" id="mgZoom" min="40" max="150" value="100" step="5" oninput="syncSlider('mgZoom');updatePageMargins()">
-              <input type="range"  id="mgZoomR" min="40" max="150" value="100" step="5" oninput="syncNum('mgZoom');updatePageMargins()">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- กลุ่ม: Preset margin -->
-      <div class="ribbon-group">
-        <span class="ribbon-group-label">Preset</span>
-        <div class="ribbon-group-inner" style="flex-direction:column;gap:2px">
-          <button class="ribbon-btn" style="padding:2px 8px" onclick="applyPreset(25,30,20,2.0)" title="ระยะมาตรฐาน กฟภ.">
-            <span class="rb-label" style="font-size:11px">📋 สารบรรณ</span>
-          </button>
-          <button class="ribbon-btn" style="padding:2px 8px" onclick="applyPreset(25,25,25,2.0)" title="ระยะเท่ากันทุกด้าน">
-            <span class="rb-label" style="font-size:11px">▣ สมมาตร</span>
-          </button>
-          <button class="ribbon-btn" style="padding:2px 8px" onclick="applyPreset(15,20,15,1.8)" title="ระยะแคบ">
-            <span class="rb-label" style="font-size:11px">◻ แคบ</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- กลุ่ม: จัดการ -->
-      <div class="ribbon-group">
-        <span class="ribbon-group-label">จัดการ</span>
-        <div class="ribbon-group-inner" style="flex-direction:column;gap:2px">
-          <button class="ribbon-btn" style="padding:2px 8px" onclick="resetPageMargins()">
-            <span class="rb-label" style="font-size:11px">↺ รีเซ็ต</span>
-          </button>
-          <button class="ribbon-btn" style="padding:2px 8px" onclick="savePageSettings()">
-            <span class="rb-label" style="font-size:11px">💾 จำค่า</span>
-          </button>
-        </div>
-      </div>
-
-    </div><!-- end ribbon -->
-    <!-- Document Body -->
+    <!-- เอกสาร -->
     <div class="modal-body" id="previewBody"></div>
 
-    <!-- Footer status bar -->
-    <div class="modal-footer">
-      <span style="font-size:11px;color:#888;flex:1" id="pageInfo">A4 · TH SarabunIT๙ 16pt</span>
-      <button class="btn btn-success btn-sm" onclick="printPreview()">🖨️ พิมพ์ / PDF</button>
-      <button class="btn btn-warning btn-sm" onclick="wordFromPreview()">📄 Word</button>
-      <button class="btn btn-secondary btn-sm" onclick="closeModal()">✕ ปิด</button>
+    <!-- แถบสถานะ -->
+    <div class="pv-status">
+      <span id="pvPageCount">หน้า ๑</span>
+      <span class="pv-status-sep" aria-hidden="true"></span>
+      <span id="pageInfo">A4 · TH SarabunIT๙ 16pt</span>
+      <span class="pv-status-zoom">
+        <button type="button" data-act="zoom-out" aria-label="ซูมออก">−</button>
+        <input type="range" id="mgZoomR" min="40" max="150" step="5" value="100" aria-label="ซูม">
+        <button type="button" data-act="zoom-in" aria-label="ซูมเข้า">+</button>
+        <span id="zoomLabel">100%</span>
+      </span>
     </div>
 
   </div>
@@ -3677,7 +3823,7 @@ function buildFullPreviewPage(title, formNum, content, s){
     'html,body{height:100%;background:#c8c8c8;font-family:'+FUI+';display:flex;flex-direction:column;overflow:hidden}'+
 
     /* ─── title bar ─── */
-    '.tbar{background:#2b579a;color:#fff;flex-shrink:0;user-select:none}'+
+    '.tbar{display:none;background:#2b579a;color:#fff;flex-shrink:0;user-select:none}'+
     '.tbar-top{display:flex;align-items:center;padding:6px 10px;gap:8px}'+
     '.tbar-title{font-size:14px;font-weight:700;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:38%}'+
 
@@ -5484,46 +5630,198 @@ document.addEventListener('DOMContentLoaded',()=>{
     return r;
   };
 
-  /* ---- พรีวิว: ชื่อเอกสาร, ซ่อนแถบตั้งค่าบนมือถือ, ย่อให้พอดีจอ, ปุ่มปิดใช้งานได้ ---- */
-  window.toggleRibbon = function(){
-    var rb = document.getElementById('previewRibbon');
-    if(rb) rb.classList.toggle('collapsed');
-  };
-  window.printPreview = function(){
-    var ifr = document.querySelector('#previewBody iframe');
-    if(ifr && ifr.contentWindow) ifr.contentWindow.print();
-    else printForm(currentPreviewForm || 1);
-  };
-  window.wordFromPreview = function(){ exportWord(currentPreviewForm || 1); };
-  function fitPreview(ifr){
-    try{
-      var d = ifr.contentDocument, w = ifr.contentWindow;
-      d.querySelectorAll('.tbar-btn').forEach(function(b){
-        if(/ปิด/.test(b.textContent)) b.onclick = function(){ closeModal(); };
-      });
-      if(MQ.matches && typeof w.setZoom === 'function'){
-        var z = Math.floor((ifr.clientWidth - 56) / 794 * 100);
-        w.setZoom(Math.max(40, Math.min(100, z)));
-      }
-    }catch(e){}
-  }
-  var _previewForm = window.previewForm;
-  window.previewForm = function(n){
-    currentPreviewForm = n;
-    var r = _previewForm.apply(this, arguments);
-    var rb = document.getElementById('previewRibbon');
-    if(rb) rb.classList.toggle('collapsed', MQ.matches);
-    var ifr = document.querySelector('#previewBody iframe');
-    if(ifr){
-      ifr.addEventListener('load', function(){ setTimeout(function(){ fitPreview(ifr); }, 150); });
-    }
-    return r;
-  };
-
   /* ---- แสดงรายการงานทันทีเมื่อเปิดหน้า (เดิมตารางว่างจนกว่าจะกดเมนู) ---- */
   document.addEventListener('DOMContentLoaded', function(){
     if(typeof renderJobsList === 'function') renderJobsList();
   });
+})();
+</script>
+
+<script id="pv-ribbon-js">
+/* ===== หน้าต่างตัวอย่างเอกสาร แบบ Ribbon: ซูม, ระยะขอบ, กระดาษ, ฟอนต์ ใช้ได้ทันทีโดยไม่ล้างข้อความที่แก้ ===== */
+(function(){
+  var TH = ['๐','๑','๒','๓','๔','๕','๖','๗','๘','๙'];
+  function th(n){ return String(n).replace(/\d/g, function(d){ return TH[+d]; }); }
+  function $(id){ return document.getElementById(id); }
+  var modal = $('previewModal');
+  if(!modal) return;
+  var win = modal.querySelector('.pv');
+  var MQ = window.matchMedia('(max-width: 900px)');
+  var MM = 96 / 25.4;                  // px ต่อ มม.
+  var zoomMode = 'fit-width';          // fit-width | fit-page | manual
+  var settingsLoaded = false;
+  var TITLES = {1:'แบบที่ ๑ · รายงานขอซื้อ/ขอจ้าง', 2:'แบบที่ ๒ · ขออนุมัติจัดซื้อ/จัดจ้าง', 3:'แบบที่ ๓ · รายงานผลการตรวจรับ'};
+
+  function frame(){ return document.querySelector('#previewBody iframe'); }
+  function fdoc(){ var f = frame(); try{ return f && f.contentDocument; }catch(e){ return null; } }
+  function settings(){
+    var paper = ($('mgPaper').value || '210x297').split('x').map(Number);
+    return {
+      top: +$('mgTop').value || 25, left: +$('mgLeft').value || 30, right: +$('mgRight').value || 20,
+      font: +$('mgFont').value || 16, line: +$('mgLine').value || 1,
+      face: $('mgFontFace').value, pw: paper[0], ph: paper[1]
+    };
+  }
+
+  /* ---- ใส่ค่าหน้ากระดาษลงในเอกสาร (สด ไม่สร้างใหม่) ---- */
+  function applyLive(){
+    var d = fdoc(); if(!d || !d.head) return;
+    var s = settings();
+    var st = d.getElementById('pv-live');
+    if(!st){ st = d.createElement('style'); st.id = 'pv-live'; d.head.appendChild(st); }
+    var pad = s.top+'mm '+s.right+'mm '+s.top+'mm '+s.left+'mm';
+    st.textContent =
+      '.tbar{display:none!important}'+
+      'html,body{background:#e9e5ee!important}'+
+      '.doc-area{background:#e9e5ee!important;padding:28px 24px 48px!important}'+
+      '.page-shell{width:'+s.pw+'mm!important;margin:0 0 28px!important}'+
+      '.a4-page{min-height:'+s.ph+'mm!important;padding:'+pad+'!important;'+
+        'box-shadow:0 1px 2px rgba(44,26,62,.10),0 6px 20px rgba(44,26,62,.14)!important}'+
+      '.a4-page:focus{box-shadow:0 1px 2px rgba(44,26,62,.10),0 6px 20px rgba(44,26,62,.14),0 0 0 2px rgba(107,44,143,.45)!important}'+
+      '.a4-page,.a4-page *{font-family:'+s.face+'!important}'+
+      '@media print{@page{size:'+s.pw+'mm '+s.ph+'mm;margin:0}'+
+        'html,body,.doc-area{background:#fff!important;padding:0!important}'+
+        '.page-shell{width:auto!important;height:auto!important;margin:0!important}'+
+        '.a4-page{transform:none!important;box-shadow:none!important;min-height:0!important;padding:'+pad+'!important}}';
+    d.querySelectorAll('.page-shell').forEach(function(sh){ delete sh.dataset.naturalH; sh.style.height = ''; });
+    setZoomMode(zoomMode);
+    updateStatus();
+  }
+
+  function updateStatus(){
+    var s = settings(), d = fdoc();
+    var pages = d ? d.querySelectorAll('.a4-page').length : 1;
+    $('pvPageCount').textContent = pages > 1 ? 'เอกสาร ' + th(pages) + ' หน้า' : 'เอกสาร ๑ หน้า';
+    var paperName = $('mgPaper').selectedOptions[0].text.split(' (')[0];
+    var faceName = $('mgFontFace').selectedOptions[0].text;
+    $('pageInfo').textContent = paperName + ' · ขอบ บน/ล่าง ' + th(s.top) + ' ซ้าย ' + th(s.left) + ' ขวา ' + th(s.right) + ' มม. · ' + faceName + ' ' + th(s.font) + ' pt';
+    modal.querySelectorAll('.pv-preset').forEach(function(b){
+      var p = b.getAttribute('data-preset').split(',').map(Number);
+      b.classList.toggle('active', p[0] === s.top && p[1] === s.left && p[2] === s.right);
+    });
+  }
+
+  /* ---- ซูม ---- */
+  function setZoom(v){
+    v = Math.max(40, Math.min(150, Math.round(v)));
+    $('mgZoom').value = v; $('mgZoomR').value = v; $('zoomLabel').textContent = v + '%';
+    var f = frame();
+    try{ if(f && f.contentWindow && f.contentWindow.setZoom) f.contentWindow.setZoom(v); }catch(e){}
+  }
+  function setZoomMode(mode){
+    zoomMode = mode;
+    var f = frame(), s = settings();
+    if(mode === 'manual' || !f){ setZoom(+$('mgZoom').value || 100); return; }
+    var w = f.clientWidth - 48, h = f.clientHeight - 56;
+    var zw = w / (s.pw * MM) * 100, zh = h / (s.ph * MM) * 100;
+    var z = mode === 'fit-page' ? Math.min(zw, zh) : zw;
+    setZoom(Math.floor(Math.min(mode === 'fit-width' ? 110 : 150, z) / 5) * 5 || 40);
+  }
+
+  /* ---- คำสั่งบน Ribbon ---- */
+  function printDoc(){
+    var f = frame();
+    if(f && f.contentWindow){ f.contentWindow.focus(); f.contentWindow.print(); }
+    else if(typeof printForm === 'function') printForm(currentPreviewForm || 1);
+  }
+  var ACTIONS = {
+    'print': printDoc,
+    'pdf': function(){ showToast('📥 เลือกเครื่องพิมพ์ "บันทึกเป็น PDF" (Save as PDF)', 'info'); setTimeout(printDoc, 400); },
+    'word': function(){ exportWord(currentPreviewForm || 1); },
+    'zoom-in': function(){ zoomMode = 'manual'; setZoom((+$('mgZoom').value || 100) + 10); },
+    'zoom-out': function(){ zoomMode = 'manual'; setZoom((+$('mgZoom').value || 100) - 10); },
+    'zoom-100': function(){ zoomMode = 'manual'; setZoom(100); },
+    'fit-width': function(){ setZoomMode('fit-width'); },
+    'fit-page': function(){ setZoomMode('fit-page'); },
+    'reset': function(){ resetPageMargins(); },
+    'save': function(){ savePageSettings(); }
+  };
+  modal.addEventListener('click', function(e){
+    var b = e.target.closest('[data-act]');
+    if(b && ACTIONS[b.getAttribute('data-act')]){ ACTIONS[b.getAttribute('data-act')](); return; }
+    var p = e.target.closest('[data-preset]');
+    if(p){
+      var v = p.getAttribute('data-preset').split(',');
+      $('mgTop').value = v[0]; $('mgLeft').value = v[1]; $('mgRight').value = v[2];
+      applyLive(); return;
+    }
+    var t = e.target.closest('[data-rtab]');
+    if(t){
+      win.classList.remove('ribbon-collapsed');
+      modal.querySelectorAll('.pv-tab').forEach(function(x){ var on = x === t; x.classList.toggle('active', on); x.setAttribute('aria-selected', on); });
+      modal.querySelectorAll('.pv-panel').forEach(function(x){ x.classList.toggle('active', x.getAttribute('data-rpanel') === t.getAttribute('data-rtab')); });
+      return;
+    }
+    var fm = e.target.closest('[data-form]');
+    if(fm){ previewForm(+fm.getAttribute('data-form')); return; }
+  });
+  $('pvCollapse').addEventListener('click', function(){
+    var c = win.classList.toggle('ribbon-collapsed');
+    this.setAttribute('aria-expanded', !c);
+    setTimeout(function(){ setZoomMode(zoomMode); }, 50);
+  });
+  $('mgZoom').addEventListener('change', function(){ zoomMode = 'manual'; setZoom(+this.value); });
+  $('mgZoomR').addEventListener('input', function(){ zoomMode = 'manual'; setZoom(+this.value); });
+  ['mgTop','mgLeft','mgRight','mgPaper','mgFontFace','mgFont','mgLine'].forEach(function(id){
+    $(id).addEventListener('change', applyLive);
+    if($(id).type === 'number') $(id).addEventListener('input', function(){ if(this.value !== '') applyLive(); });
+  });
+  window.addEventListener('resize', function(){ if(modal.classList.contains('open') && zoomMode !== 'manual') setZoomMode(zoomMode); });
+
+  /* ---- ฟังก์ชันเดิมที่ปุ่มอื่นยังเรียกใช้ ---- */
+  window.updatePageMargins = applyLive;
+  window.resetPageMargins = function(){
+    $('mgTop').value = 25; $('mgLeft').value = 30; $('mgRight').value = 20;
+    $('mgFont').value = 16; $('mgLine').value = '1'; $('mgPaper').value = '210x297';
+    $('mgFontFace').selectedIndex = 0;
+    applyLive();
+    showToast('↺ กลับไปใช้ค่ามาตรฐานแล้ว');
+  };
+  function normaliseLine(){
+    var el = $('mgLine'), v = parseFloat(el.value);
+    if(el.selectedIndex < 0 || isNaN(v)){
+      var best = '1';
+      [].forEach.call(el.options, function(o){ if(Math.abs(+o.value - v) < Math.abs(+best - v)) best = o.value; });
+      el.value = best;
+    }
+  }
+
+  /* ---- เปิดตัวอย่าง ---- */
+  var _previewForm = window.previewForm;
+  window.previewForm = function(n){
+    n = +n || 1;
+    if(!settingsLoaded){ settingsLoaded = true; try{ if(typeof loadPageSettings === 'function') loadPageSettings(); }catch(e){} normaliseLine(); }
+    currentPreviewForm = n;
+    var r = _previewForm.call(this, n);
+    $('previewTitle').textContent = TITLES[n] || 'ตัวอย่างเอกสาร';
+    modal.querySelectorAll('[data-form]').forEach(function(b){
+      var on = +b.getAttribute('data-form') === n;
+      b.classList.toggle('active', on); b.setAttribute('aria-selected', on);
+    });
+    if(MQ.matches) win.classList.add('ribbon-collapsed');
+    var f = frame();
+    if(f){
+      f.addEventListener('load', function(){
+        applyLive();
+        setTimeout(function(){ setZoomMode(zoomMode); }, 120);
+        try{
+          f.contentDocument.addEventListener('keydown', onKey, true);
+        }catch(e){}
+      });
+    }
+    return r;
+  };
+
+  /* ---- คีย์ลัด: Ctrl+P พิมพ์, Esc ปิด, Ctrl +/- ซูม ---- */
+  function onKey(e){
+    if(!modal.classList.contains('open')) return;
+    var mod = e.ctrlKey || e.metaKey;
+    if(mod && (e.key === 'p' || e.key === 'P')){ e.preventDefault(); e.stopImmediatePropagation(); printDoc(); }
+    else if(e.key === 'Escape'){ e.preventDefault(); closeModal(); }
+    else if(mod && (e.key === '=' || e.key === '+')){ e.preventDefault(); ACTIONS['zoom-in'](); }
+    else if(mod && e.key === '-'){ e.preventDefault(); ACTIONS['zoom-out'](); }
+  }
+  window.addEventListener('keydown', onKey, true);
 })();
 </script>
 </html>
