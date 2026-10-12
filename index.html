@@ -2193,8 +2193,12 @@ function preprocessImageForOcr(dataUrl){
     img.onload = function(){
       try{
         // ภาพเล็กทำให้ OCR อ่านตัวอักษรไทยผิดบ่อย — ขยายให้กว้างอย่างน้อย ๑๖๐๐px
+        // ภาพถ่ายจากมือถือมักกว้างเกิน ๓๐๐๐px ซึ่งไม่ช่วยความแม่นยำเพิ่มแต่ทำให้ OCR ช้าลงมาก — จำกัดเพดานไว้ที่ ๒๐๐๐px
         var MIN_WIDTH = 1600;
-        var scale = img.width < MIN_WIDTH ? (MIN_WIDTH / img.width) : 1;
+        var MAX_WIDTH = 2000;
+        var scale = 1;
+        if(img.width < MIN_WIDTH) scale = MIN_WIDTH / img.width;
+        else if(img.width > MAX_WIDTH) scale = MAX_WIDTH / img.width;
         var w = Math.max(1, Math.round(img.width * scale));
         var h = Math.max(1, Math.round(img.height * scale));
 
