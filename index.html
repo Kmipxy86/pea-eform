@@ -1759,7 +1759,7 @@ function importQuoteFromPDF(file){
             showToast('⚠️ ไม่พบรายการที่ตรงรูปแบบ รายการ+จำนวน+หน่วย+ราคา ในไฟล์ PDF นี้', 'error');
             return;
           }
-          var sub = parsed.reduce(function(a,it){ return a+(it.qty||1)*(it.price||0); }, 0);
+          var sub = parsed.reduce(function(a,it){ return a+Math.max(0,(it.qty||1)*(it.price||0)-(it.discount||0)); }, 0);
           var vat = parseFloat((sub*0.07).toFixed(2));
           var total = parseFloat((sub+vat).toFixed(2));
           showQuoteResultModal('PDF: '+file.name, parsed, sub, vat, total);
@@ -1786,7 +1786,7 @@ function importQuoteFromWord(file){
           showToast('⚠️ ไม่พบรายการที่ตรงรูปแบบ รายการ+จำนวน+หน่วย+ราคา ในไฟล์ Word นี้', 'error');
           return;
         }
-        var sub = parsed.reduce(function(a,it){ return a+(it.qty||1)*(it.price||0); }, 0);
+        var sub = parsed.reduce(function(a,it){ return a+Math.max(0,(it.qty||1)*(it.price||0)-(it.discount||0)); }, 0);
         var vat = parseFloat((sub*0.07).toFixed(2));
         var total = parseFloat((sub+vat).toFixed(2));
         showQuoteResultModal('Word: '+file.name, parsed, sub, vat, total);
@@ -2101,20 +2101,17 @@ function tryParseStructuredLine(tokens, unitPattern){
   var tailNums = numIdx.filter(function(i){ return i > priceIdx; })
     .map(function(i){ return parseFloat(normalizeOcrNumberToken(tokens[i])); });
 
-  var finalPrice = price, discountNote = null;
+  // ส่วนลด เก็บเป็นจำนวนเงินรวมต่อแถวเสมอ (แปลงจากเปอร์เซ็นต์ถ้าตรวจพบ) เพื่อให้แก้ไขในตารางได้ง่าย
+  var discount = 0;
   if(discountPercent !== null && discountPercent > 0 && discountPercent < 100){
-    finalPrice = Math.round(price * (1 - discountPercent/100) * 100) / 100;
-    discountNote = 'ส่วนลด ' + discountPercent + '% (เดิม ' + price.toFixed(2) + ')';
+    discount = Math.round(price * qty * (discountPercent/100) * 100) / 100;
   } else if(tailNums.length >= 2){
     var lineTotal = qty * price;
     var discountAmt = tailNums[0];
-    if(discountAmt > 0 && discountAmt < lineTotal){
-      finalPrice = Math.round(((lineTotal - discountAmt) / qty) * 100) / 100;
-      discountNote = 'ส่วนลด ' + discountAmt.toFixed(2) + ' บาท/แถว (เดิม ' + price.toFixed(2) + ')';
-    }
+    if(discountAmt > 0 && discountAmt < lineTotal) discount = discountAmt;
   }
 
-  return {desc: desc, qty: qty, unit: unit, price: finalPrice, discountNote: discountNote, _selected: true};
+  return {desc: desc, qty: qty, unit: unit, price: price, discount: discount, _selected: true};
 }
 
 // พยายามแกะบรรทัดที่ข้อความ/ตัวเลข/หน่วยติดกัน เช่น "ดินสอ 10 ด้าม 20.00"
@@ -2347,7 +2344,7 @@ function runOcrOnImage(filename, dataUrl){
         return;
       }
       // คำนวณยอดรวม/VAT/ทั้งสิ้น
-      var sub = parsed.reduce(function(a,it){ return a+(it.qty||1)*(it.price||0); }, 0);
+      var sub = parsed.reduce(function(a,it){ return a+Math.max(0,(it.qty||1)*(it.price||0)-(it.discount||0)); }, 0);
       var vat = parseFloat((sub*0.07).toFixed(2));
       var total = parseFloat((sub+vat).toFixed(2));
       showQuoteResultModal(filename, parsed, sub, vat, total, confidence);
@@ -2372,17 +2369,17 @@ function showQuoteResultModal(filename, items, sub, vat, total, confidence){
   }
 
   // สร้าง Markdown table
-  var md = '| ที่ | รายการ | จำนวน | หน่วย | ราคาต่อหน่วย | ราคารวม |\n';
-  md    += '|---|---|---|---|---|---|\n';
+  var md = '| ที่ | รายการ | จำนวน | หน่วย | ราคาต่อหน่วย | ส่วนลด | ราคารวม |\n';
+  md    += '|---|---|---|---|---|---|---|\n';
   var itemRows = items.map(function(it, i){
-    var rowTotal = ((it.qty||1)*(it.price||0)).toFixed(2);
+    var rowTotal = Math.max(0, (it.qty||1)*(it.price||0)-(it.discount||0)).toFixed(2);
     md += '| '+(i+1)+' | '+(it.desc||'')+' | '+(it.qty||1)+' | '+(it.unit||'')+
-          ' | '+((it.price||0).toFixed(2))+' | '+rowTotal+' |\n';
+          ' | '+((it.price||0).toFixed(2))+' | '+((it.discount||0).toFixed(2))+' | '+rowTotal+' |\n';
     return it;
   });
-  md += '| | **รวมเป็นเงิน** | | | | **'+sub.toFixed(2)+'** |\n';
-  md += '| | **ภาษีมูลค่าเพิ่ม ๗%** | | | | **'+vat.toFixed(2)+'** |\n';
-  md += '| | **จำนวนเงินรวมทั้งสิ้น** | | | | **'+total.toFixed(2)+'** |\n';
+  md += '| | **รวมเป็นเงิน** | | | | | **'+sub.toFixed(2)+'** |\n';
+  md += '| | **ภาษีมูลค่าเพิ่ม ๗%** | | | | | **'+vat.toFixed(2)+'** |\n';
+  md += '| | **จำนวนเงินรวมทั้งสิ้น** | | | | | **'+total.toFixed(2)+'** |\n';
 
   // สร้าง JSON
   var jsonObj = {
@@ -2393,7 +2390,8 @@ function showQuoteResultModal(filename, items, sub, vat, total, confidence){
         'จำนวน': it.qty||1,
         'หน่วย': it.unit||'',
         'ราคาต่อหน่วย': it.price||0,
-        'ราคารวม': parseFloat(((it.qty||1)*(it.price||0)).toFixed(2))
+        'ส่วนลด': it.discount||0,
+        'ราคารวม': parseFloat(Math.max(0, (it.qty||1)*(it.price||0)-(it.discount||0)).toFixed(2))
       };
     }),
     'รวมเป็นเงิน': sub,
@@ -2443,18 +2441,19 @@ function showQuoteResultModal(filename, items, sub, vat, total, confidence){
             '<th style="padding:8px;width:70px;text-align:center">จำนวน</th>'+
             '<th style="padding:8px;width:70px;text-align:center">หน่วย</th>'+
             '<th style="padding:8px;width:100px;text-align:right">ราคา/หน่วย</th>'+
+            '<th style="padding:8px;width:90px;text-align:right">ส่วนลด (บาท)</th>'+
             '<th style="padding:8px;width:100px;text-align:right">ราคารวม</th>'+
           '</tr></thead>'+
           '<tbody id="quoteResultBody">'+
             renderQuoteResultRows(items)+
           '</tbody>'+
           '<tfoot style="background:#f5f5f5;font-weight:600">'+
-            '<tr><td colspan="6" style="padding:6px 10px;text-align:right;border-top:2px solid #ddd">รวมเป็นเงิน</td>'+
-              '<td style="padding:6px 10px;text-align:right;border-top:2px solid #ddd">'+sub.toFixed(2)+'</td></tr>'+
-            '<tr><td colspan="6" style="padding:6px 10px;text-align:right">ภาษีมูลค่าเพิ่ม ๗%</td>'+
-              '<td style="padding:6px 10px;text-align:right">'+vat.toFixed(2)+'</td></tr>'+
-            '<tr style="background:#EDE7F6"><td colspan="6" style="padding:8px 10px;text-align:right;color:var(--pea-purple)">จำนวนเงินรวมทั้งสิ้น</td>'+
-              '<td style="padding:8px 10px;text-align:right;color:var(--pea-purple);font-size:15px">'+total.toFixed(2)+'</td></tr>'+
+            '<tr><td colspan="7" style="padding:6px 10px;text-align:right;border-top:2px solid #ddd">รวมเป็นเงิน</td>'+
+              '<td id="qtSubTotal" style="padding:6px 10px;text-align:right;border-top:2px solid #ddd">'+sub.toFixed(2)+'</td></tr>'+
+            '<tr><td colspan="7" style="padding:6px 10px;text-align:right">ภาษีมูลค่าเพิ่ม ๗%</td>'+
+              '<td id="qtVatTotal" style="padding:6px 10px;text-align:right">'+vat.toFixed(2)+'</td></tr>'+
+            '<tr style="background:#EDE7F6"><td colspan="7" style="padding:8px 10px;text-align:right;color:var(--pea-purple)">จำนวนเงินรวมทั้งสิ้น</td>'+
+              '<td id="qtGrandTotal" style="padding:8px 10px;text-align:right;color:var(--pea-purple);font-size:15px">'+total.toFixed(2)+'</td></tr>'+
           '</tfoot>'+
         '</table>'+
       '</div>'+
@@ -2500,7 +2499,7 @@ function showQuoteResultModal(filename, items, sub, vat, total, confidence){
 
 function renderQuoteResultRows(items){
   return (items||[]).map(function(it,i){
-    var rowTotal = ((it.qty||1)*(it.price||0)).toFixed(2);
+    var rowTotal = Math.max(0, (it.qty||1)*(it.price||0)-(it.discount||0)).toFixed(2);
     return '<tr style="border-bottom:1px solid #eee">'+
       '<td style="padding:5px 6px;text-align:center">'+
         '<input type="checkbox" checked onchange="window._quoteResultItems['+i+']._selected=this.checked" style="cursor:pointer">'+
@@ -2509,11 +2508,10 @@ function renderQuoteResultRows(items){
       '<td style="padding:4px 6px">'+
         '<input value="'+(it.desc||'').replace(/"/g,'&quot;')+'" style="width:100%;border:1px solid #e0d0f0;border-radius:4px;padding:3px 6px;font-size:13px" '+
         'onchange="window._quoteResultItems['+i+'].desc=this.value">'+
-        (it.discountNote ? '<div style="font-size:11px;color:#2e7d32;margin-top:2px">🏷️ '+escapeHtml(it.discountNote)+' — คำนวณราคา/หน่วยหลังหักส่วนลดแล้ว</div>' : '')+
       '</td>'+
       '<td style="padding:4px 6px">'+
         '<input type="number" value="'+(it.qty||1)+'" min="0.01" step="0.01" style="width:100%;border:1px solid #e0d0f0;border-radius:4px;padding:3px 6px;font-size:13px;text-align:right" '+
-        'onchange="window._quoteResultItems['+i+'].qty=+this.value">'+
+        'onchange="onQuoteResultFieldChange('+i+',\'qty\',+this.value)">'+
       '</td>'+
       '<td style="padding:4px 6px">'+
         '<input value="'+(it.unit||'')+'" style="width:100%;border:1px solid #e0d0f0;border-radius:4px;padding:3px 6px;font-size:13px" '+
@@ -2521,11 +2519,40 @@ function renderQuoteResultRows(items){
       '</td>'+
       '<td style="padding:4px 6px">'+
         '<input type="number" value="'+(it.price||0)+'" min="0" step="0.01" style="width:100%;border:1px solid #e0d0f0;border-radius:4px;padding:3px 6px;font-size:13px;text-align:right" '+
-        'onchange="window._quoteResultItems['+i+'].price=+this.value">'+
+        'onchange="onQuoteResultFieldChange('+i+',\'price\',+this.value)">'+
       '</td>'+
-      '<td style="padding:5px 10px;text-align:right;color:#555;font-size:12px">'+rowTotal+'</td>'+
+      '<td style="padding:4px 6px">'+
+        '<input type="number" value="'+(it.discount||0)+'" min="0" step="0.01" title="ส่วนลดรวมของทั้งแถว (บาท)" '+
+        'style="width:100%;border:1px solid #e0d0f0;border-radius:4px;padding:3px 6px;font-size:13px;text-align:right" '+
+        'onchange="onQuoteResultFieldChange('+i+',\'discount\',+this.value)">'+
+      '</td>'+
+      '<td id="qtRowTotal_'+i+'" style="padding:5px 10px;text-align:right;color:#555;font-size:12px">'+rowTotal+'</td>'+
     '</tr>';
   }).join('');
+}
+
+// อัปเดตค่าช่องในตาราง OCR แล้วคำนวณราคารวมของแถว + สรุปยอดทั้งหมดใหม่แบบ real-time
+function onQuoteResultFieldChange(i, field, value){
+  if(!window._quoteResultItems || !window._quoteResultItems[i]) return;
+  window._quoteResultItems[i][field] = value;
+  var it = window._quoteResultItems[i];
+  var rowTotal = Math.max(0, (it.qty||1)*(it.price||0)-(it.discount||0));
+  var cell = document.getElementById('qtRowTotal_'+i);
+  if(cell) cell.textContent = rowTotal.toFixed(2);
+  recalcQuoteResultSummary();
+}
+
+function recalcQuoteResultSummary(){
+  var items = window._quoteResultItems || [];
+  var sub = items.reduce(function(a,it){ return a+Math.max(0,(it.qty||1)*(it.price||0)-(it.discount||0)); }, 0);
+  var vat = parseFloat((sub*0.07).toFixed(2));
+  var total = parseFloat((sub+vat).toFixed(2));
+  var subEl = document.getElementById('qtSubTotal');
+  var vatEl = document.getElementById('qtVatTotal');
+  var totalEl = document.getElementById('qtGrandTotal');
+  if(subEl) subEl.textContent = sub.toFixed(2);
+  if(vatEl) vatEl.textContent = vat.toFixed(2);
+  if(totalEl) totalEl.textContent = total.toFixed(2);
 }
 
 function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -2555,8 +2582,13 @@ function copyQuoteText(type){
 }
 
 function confirmImportQuoteResult(){
+  // ฟอร์มหลักไม่มีฟิลด์ส่วนลดแยก จึงฝังส่วนลดไว้ในราคา/หน่วยตอนนำเข้า เพื่อให้ จำนวน×ราคา ตรงกับยอดสุทธิ
   var selected = (window._quoteResultItems||[]).filter(function(it){ return it._selected; })
-    .map(function(it){ return {desc:it.desc||'', qty:it.qty||1, unit:it.unit||'', price:it.price||0}; });
+    .map(function(it){
+      var qty = it.qty||1, price = it.price||0, discount = it.discount||0;
+      var netPrice = discount>0 ? Math.max(0, Math.round(((qty*price-discount)/qty)*100)/100) : price;
+      return {desc:it.desc||'', qty:qty, unit:it.unit||'', price:netPrice};
+    });
   if(!selected.length){ showToast('⚠️ กรุณาเลือกอย่างน้อย 1 รายการ', 'error'); return; }
   if(confirm('นำเข้า '+selected.length+' รายการ\n\nต้องการแทนที่รายการปัจจุบันหรือไม่?\n(กด ยกเลิก เพื่อเพิ่มต่อท้ายแทน)')){
     f1_items = selected;
