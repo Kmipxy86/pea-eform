@@ -1985,7 +1985,22 @@ function updateAmount3(){
 function copyItemsFrom1(){f2_items=JSON.parse(JSON.stringify(f1_items));window.items_f2_items=f2_items;}
 
 // ========== วิเคราะห์ข้อความดิบ → แยกรายการ/จำนวน/ราคา (ใช้ร่วมกัน PDF/Word/รูปภาพ) ==========
+// แปลงข้อความดิบจาก OCR ให้พาร์สง่ายขึ้น: เลขไทย→อารบิก, เส้นตารางที่อ่านเป็นตัวอักษร, ช่องว่างซ้ำ
+function normalizeOcrText(text){
+  var thaiDigits = '๐๑๒๓๔๕๖๗๘๙';
+  text = text.replace(/[๐-๙]/g, function(ch){ return String(thaiDigits.indexOf(ch)); });
+  text = text.replace(/[|｜‖]/g, ' ');
+  text = text.replace(/[ \t]+/g, ' ');
+  return text;
+}
+
+// แก้ตัวอักษรที่ OCR อ่านผิดบ่อยในบริบทตัวเลข (O/o→0, l/I→1) ก่อนตรวจว่าเป็นตัวเลขหรือไม่
+function cleanNumericToken(t){
+  return t.replace(/[Oo]/g,'0').replace(/[lI]/g,'1');
+}
+
 function parseQuoteTextToItems(rawText){
+  rawText = normalizeOcrText(rawText);
   var lines = rawText.split(/\n+/).map(function(l){return l.trim();}).filter(Boolean);
   var results = [];
 
@@ -2025,7 +2040,7 @@ function tryParseStructuredLine(tokens, unitPattern){
   var numIdx = [];
   var unitIdx = -1;
   tokens.forEach(function(t, i){
-    var cleaned = t.replace(/,/g,'');
+    var cleaned = cleanNumericToken(t.replace(/,/g,''));
     if(/^\d+\.?\d*$/.test(cleaned)) numIdx.push(i);
     else if(unitPattern.test(t)) unitIdx = i;
   });
@@ -2039,8 +2054,8 @@ function tryParseStructuredLine(tokens, unitPattern){
   var desc = descTokens.join(' ').replace(/^[-–—•.\s\d]+/, '').trim();
   if(!desc || desc.length < 2 || desc.length > 80) return null;
 
-  var qty = parseFloat(tokens[numIdx[0]].replace(/,/g,''));
-  var price = parseFloat(tokens[numIdx[numIdx.length-1]].replace(/,/g,''));
+  var qty = parseFloat(cleanNumericToken(tokens[numIdx[0]].replace(/,/g,'')));
+  var price = parseFloat(cleanNumericToken(tokens[numIdx[numIdx.length-1]].replace(/,/g,'')));
   var unit = tokens[unitIdx];
 
   if(isNaN(qty) || isNaN(price) || qty <= 0 || price <= 0) return null;
@@ -2055,17 +2070,19 @@ function tryParseInlineLine(line, unitPattern){
     'รีม','ขวด','ถุง','กระป๋อง','ตัว','คัน','เครื่อง','เมตร','ม\\.','กก\\.','กิโลกรัม','ลิตร',
     'งาน','คู่','โหล','แกลลอน','หลอด','ก้อน','set','pcs','pc','box','roll','unit','ea'].join('|') + ')';
 
+  // อนุญาตตัวอักษร O/o/l/I ปนในกลุ่มตัวเลข เพราะ OCR มักอ่านผิดเป็นตัวอักษรเหล่านี้แทน 0/1
+  var numAlt = '[\\dOolI,]+\\.?[\\dOolI]*';
   var re = new RegExp(
-    '^(.{2,80}?)\\s+([\\d,]+\\.?\\d*)\\s*' + unitAlt + '\\s+([\\d,]+\\.?\\d*)\\s*(?:บาท)?$',
+    '^(.{2,80}?)\\s+(' + numAlt + ')\\s*' + unitAlt + '\\s+(' + numAlt + ')\\s*(?:บาท)?$',
     'i'
   );
   var m = line.match(re);
   if(!m) return null;
 
   var desc = m[1].replace(/^[-–—•.\s\d]+/, '').trim();
-  var qty = parseFloat(m[2].replace(/,/g,''));
+  var qty = parseFloat(cleanNumericToken(m[2].replace(/,/g,'')));
   var unit = m[3];
-  var price = parseFloat(m[4].replace(/,/g,''));
+  var price = parseFloat(cleanNumericToken(m[4].replace(/,/g,'')));
 
   if(!desc || desc.length < 2) return null;
   if(isNaN(qty) || isNaN(price) || qty <= 0 || price <= 0) return null;
@@ -2169,42 +2186,130 @@ function importQuoteFromImage(file){
   reader.readAsDataURL(file);
 }
 
-// ---- OCR รูปภาพ: อ่านข้อความด้วย Tesseract.js แล้ววิเคราะห์รายการ ----
+// ---- เตรียมภาพก่อน OCR: ขยายภาพเล็ก + แปลงขาวดำด้วย Otsu threshold เพื่อเพิ่มความแม่นยำ ----
+function preprocessImageForOcr(dataUrl){
+  return new Promise(function(resolve, reject){
+    var img = new Image();
+    img.onload = function(){
+      try{
+        // ภาพเล็กทำให้ OCR อ่านตัวอักษรไทยผิดบ่อย — ขยายให้กว้างอย่างน้อย ๑๖๐๐px
+        var MIN_WIDTH = 1600;
+        var scale = img.width < MIN_WIDTH ? (MIN_WIDTH / img.width) : 1;
+        var w = Math.max(1, Math.round(img.width * scale));
+        var h = Math.max(1, Math.round(img.height * scale));
+
+        var canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        var ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, w, h);
+
+        var imgData = ctx.getImageData(0, 0, w, h);
+        var d = imgData.data;
+
+        // แปลงเป็นระดับเทา + หา threshold ด้วยวิธี Otsu เพื่อ binarize ภาพ (ขาวดำคมชัด)
+        var hist = new Array(256).fill(0);
+        var gray = new Uint8ClampedArray(w*h);
+        var i, p;
+        for(i=0, p=0; i<d.length; i+=4, p++){
+          var g = (0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2]) | 0;
+          gray[p] = g;
+          hist[g]++;
+        }
+        var total = w*h, sum = 0, t;
+        for(t=0; t<256; t++) sum += t*hist[t];
+        var sumB=0, wB=0, wF=0, maxVar=0, threshold=127;
+        for(t=0; t<256; t++){
+          wB += hist[t];
+          if(wB===0) continue;
+          wF = total - wB;
+          if(wF===0) break;
+          sumB += t*hist[t];
+          var mB = sumB/wB, mF = (sum-sumB)/wF;
+          var varBetween = wB*wF*(mB-mF)*(mB-mF);
+          if(varBetween > maxVar){ maxVar = varBetween; threshold = t; }
+        }
+
+        for(i=0, p=0; i<d.length; i+=4, p++){
+          var v = gray[p] > threshold ? 255 : 0;
+          d[i] = d[i+1] = d[i+2] = v;
+        }
+        ctx.putImageData(imgData, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      }catch(err){ reject(err); }
+    };
+    img.onerror = function(){ reject(new Error('โหลดรูปภาพไม่สำเร็จสำหรับเตรียมข้อมูลก่อน OCR')); };
+    img.src = dataUrl;
+  });
+}
+
+// ---- OCR รูปภาพ: เตรียมภาพแล้วอ่านข้อความด้วย Tesseract.js (ปรับ PSM ให้เหมาะกับตารางรายการ) ----
 function runOcrOnImage(filename, dataUrl){
-  showToast('🔍 กำลังวิเคราะห์ข้อความในรูปภาพ (อาจใช้เวลาสักครู่) ...', 'info');
+  showToast('🔍 กำลังเตรียมรูปภาพและวิเคราะห์ข้อความ (อาจใช้เวลาสักครู่) ...', 'info');
   if(typeof Tesseract === 'undefined'){
     showToast('⚠️ โหลดระบบ OCR ไม่สำเร็จ — กรุณากรอกข้อมูลด้วยตนเองจากรูปที่แสดง', 'error');
     return;
   }
-  Tesseract.recognize(dataUrl, 'tha+eng', {
-    logger: function(m){
-      if(m.status === 'recognizing text' && m.progress){
-        var pct = Math.round(m.progress*100);
-        var lbl = document.getElementById('quoteImgZoomLabel');
-        if(lbl) lbl.textContent = 'OCR ' + pct + '%';
+  var lbl = document.getElementById('quoteImgZoomLabel');
+  var worker = null;
+
+  preprocessImageForOcr(dataUrl)
+    .catch(function(err){
+      console.warn('เตรียมภาพก่อน OCR ไม่สำเร็จ ใช้ภาพต้นฉบับแทน:', err);
+      return dataUrl;
+    })
+    .then(function(ocrImage){
+      return Tesseract.createWorker('tha+eng', 1, {
+        logger: function(m){
+          if(m.status === 'recognizing text' && m.progress && lbl){
+            lbl.textContent = 'OCR ' + Math.round(m.progress*100) + '%';
+          }
+        }
+      }).then(function(w){
+        worker = w;
+        return worker.setParameters({
+          preserve_interword_spaces: '1',
+          tessedit_pageseg_mode: '6' // SINGLE_UNIFORM_BLOCK — เหมาะกับตารางรายการสินค้าที่เป็นบล็อกเดียว
+        });
+      }).then(function(){
+        return worker.recognize(ocrImage);
+      }).then(function(result){
+        return worker.terminate().then(function(){ return result; });
+      });
+    })
+    .then(function(result){
+      var rawText = result.data.text || '';
+      var confidence = result.data.confidence; // 0-100
+      var parsed = parseQuoteTextToItems(rawText);
+      if(!parsed.length){
+        showToast('⚠️ OCR อ่านข้อความได้ แต่ไม่พบรายการที่ตรงรูปแบบ รายการ+จำนวน+หน่วย+ราคา', 'error');
+        return;
       }
-    }
-  }).then(function(result){
-    var rawText = result.data.text || '';
-    var parsed = parseQuoteTextToItems(rawText);
-    if(!parsed.length){
-      showToast('⚠️ OCR อ่านข้อความได้ แต่ไม่พบรายการที่ตรงรูปแบบ รายการ+จำนวน+หน่วย+ราคา', 'error');
-      return;
-    }
-    // คำนวณยอดรวม/VAT/ทั้งสิ้น
-    var sub = parsed.reduce(function(a,it){ return a+(it.qty||1)*(it.price||0); }, 0);
-    var vat = parseFloat((sub*0.07).toFixed(2));
-    var total = parseFloat((sub+vat).toFixed(2));
-    showQuoteResultModal(filename, parsed, sub, vat, total);
-  }).catch(function(err){
-    showToast('❌ OCR อ่านรูปภาพไม่สำเร็จ: '+err.message, 'error');
-  });
+      // คำนวณยอดรวม/VAT/ทั้งสิ้น
+      var sub = parsed.reduce(function(a,it){ return a+(it.qty||1)*(it.price||0); }, 0);
+      var vat = parseFloat((sub*0.07).toFixed(2));
+      var total = parseFloat((sub+vat).toFixed(2));
+      showQuoteResultModal(filename, parsed, sub, vat, total, confidence);
+    })
+    .catch(function(err){
+      if(worker) worker.terminate();
+      showToast('❌ OCR อ่านรูปภาพไม่สำเร็จ: '+err.message, 'error');
+    });
 }
 
 // ---- แสดงผลวิเคราะห์เป็นตาราง Markdown + JSON พร้อมปุ่มนำเข้า ----
-function showQuoteResultModal(filename, items, sub, vat, total){
+function showQuoteResultModal(filename, items, sub, vat, total, confidence){
   var existing = document.getElementById('quoteResultModal');
   if(existing) existing.remove();
+
+  var confidenceWarning = '';
+  if(typeof confidence === 'number' && confidence < 70){
+    confidenceWarning =
+      '<div style="background:#FDECEA;border:1px solid #F5C6CB;border-radius:8px;padding:8px 14px;font-size:12px;color:#842029;margin-bottom:8px">'+
+      '🔎 ความมั่นใจของ OCR ค่อนข้างต่ำ ('+Math.round(confidence)+'%) — ถ่ายภาพให้คมชัด แสงสม่ำเสมอ และตรงเอกสารมากขึ้น จะช่วยให้ผลแม่นยำขึ้น กรุณาตรวจทานตัวเลขทุกแถวก่อนนำเข้า'+
+      '</div>';
+  }
 
   // สร้าง Markdown table
   var md = '| ที่ | รายการ | จำนวน | หน่วย | ราคาต่อหน่วย | ราคารวม |\n';
@@ -2266,6 +2371,7 @@ function showQuoteResultModal(filename, items, sub, vat, total){
 
       // ตาราง (แสดงก่อน)
       '<div id="qtab_content_table">'+
+        confidenceWarning+
         '<div style="background:#FFF8E1;border:1px solid #FFE082;border-radius:8px;padding:8px 14px;font-size:12px;color:#7a5c00;margin-bottom:12px">'+
           '⚠️ ตรวจสอบความถูกต้องก่อนนำเข้า — OCR อาจอ่านตัวเลขผิดได้ โดยเฉพาะรูปภาพที่ถ่ายไม่คมชัด'+
         '</div>'+
