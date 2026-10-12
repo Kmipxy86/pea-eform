@@ -360,6 +360,132 @@ input[type=number]{text-align:right}
   import Keycloak from 'https://cdn.jsdelivr.net/npm/keycloak-js@26.0.0/lib/keycloak.js';
   window.Keycloak = Keycloak;
 </script>
+
+<style id="ux-refresh">
+/* ===== UX refresh 2026-10 — ใช้งานง่ายขึ้น / รองรับมือถือ ===== */
+:root{--nav-h:76px}
+/* overflow-x:hidden ทำให้ position:sticky ใช้ไม่ได้ → ใช้ clip แทน */
+.main{overflow-x:clip;min-width:0}
+/* contrast + focus */
+.btn-warning{color:var(--pea-text)}
+.btn-warning:hover{color:#fff}
+.btn:focus-visible,.sidebar-btn:focus-visible,.tab-btn:focus-visible,.step:focus-visible,.stat-card:focus-visible,.nav-menu-btn:focus-visible{outline:3px solid var(--pea-gold-light);outline-offset:2px}
+.form-control:hover{border-color:var(--pea-purple-light)}
+.form-control:focus{box-shadow:0 0 0 3px rgba(107,44,143,.18)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn{min-height:40px;justify-content:center}
+/* nav */
+.nav-menu-btn{display:none;align-items:center;justify-content:center;width:42px;height:42px;flex-shrink:0;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;border-radius:var(--radius-sm);font-size:22px;line-height:1;cursor:pointer}
+.sidebar-backdrop{display:none}
+/* page header */
+.page-head{gap:12px;flex-wrap:wrap}
+/* tabs: เลื่อนแนวนอนแทนการตัดบรรทัด */
+.tabs{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab-btn{white-space:nowrap;flex-shrink:0}
+/* stepper คลิกได้ */
+.step{cursor:pointer;border-radius:var(--radius-md);padding:4px 6px 4px 0}
+.step:hover .step-dot{box-shadow:0 0 0 4px rgba(107,44,143,.15)}
+.step-active{cursor:default}
+/* stats */
+.stats-grid{grid-template-columns:repeat(4,1fr)}
+.stat-card{cursor:pointer;transition:.15s;box-shadow:var(--shadow-sm)}
+.stat-card:hover{border-color:var(--pea-purple-light)!important;transform:translateY(-1px);box-shadow:var(--shadow-md)}
+.stat-card.is-active{border-color:var(--pea-purple)!important;box-shadow:0 0 0 2px rgba(107,44,143,.2)}
+.jobs-filter{flex-wrap:wrap}
+.td-subject{cursor:pointer;color:var(--pea-purple);font-weight:500}
+.td-subject:hover{text-decoration:underline}
+.empty-state{text-align:center;padding:36px 16px;color:var(--pea-text-muted);display:flex;flex-direction:column;align-items:center;gap:4px}
+/* แถบปุ่มลอยด้านล่างของฟอร์ม */
+.form-actionbar{position:sticky;bottom:0;z-index:40;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 24px;margin:24px -24px -24px;background:rgba(255,255,255,.97);border-top:1px solid var(--pea-border-light);box-shadow:0 -4px 14px rgba(107,44,143,.08)}
+.ab-tabnav{display:flex;align-items:center;gap:8px}
+.ab-progress{font-size:15px;color:var(--pea-text-muted);min-width:84px;text-align:center}
+.ab-spacer{flex:1}
+.toast{bottom:96px}
+/* preview modal */
+.modal-overlay{height:100vh;height:100dvh}
+.modal{height:100vh;height:100dvh}
+.modal-header-title{margin-right:12px}
+.ribbon-toggle{white-space:nowrap;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.12);color:#fff;border-radius:var(--radius-sm);padding:4px 12px;font-family:inherit;font-size:14px;cursor:pointer}
+.ribbon-toggle:hover{background:rgba(255,255,255,.25)}
+.modal-ribbon.collapsed{display:none}
+.modal-footer{align-items:center;flex-wrap:wrap}
+/* admin */
+.admin-quick{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:8px}
+.admin-modal,.lock-box{max-width:92vw}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+
+/* ---------- แท็บเล็ต / มือถือ ---------- */
+@media (max-width:900px){
+  :root{--nav-h:60px}
+  .nav{height:60px;padding:0 12px;gap:8px}
+  .nav-logo{gap:10px;min-width:0;flex:1 1 auto}
+  .nav-logo>div{min-width:0}
+  .nav-menu-btn{display:inline-flex}
+  #navLogo{height:38px!important;width:38px!important}
+  .nav-title-main{font-size:16px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nav-sub,.nav-btn-label{display:none}
+  .nav .btn,#adminNavBtn{padding:8px 12px!important;min-height:40px}
+  .layout{min-height:calc(100vh - 60px)}
+  .sidebar{display:flex!important;position:fixed;top:0;left:0;bottom:0;height:100vh;height:100dvh;width:min(84vw,300px);z-index:400;transform:translateX(-102%);transition:transform .25s ease;box-shadow:var(--shadow-lg)}
+  body.sidebar-open{overflow:hidden}
+  body.sidebar-open .sidebar{transform:none}
+  body.sidebar-open .sidebar-backdrop{display:block;position:fixed;inset:0;background:rgba(44,26,62,.45);z-index:399}
+  .main{padding:16px}
+  .card{padding:16px;border-radius:var(--radius-md)}
+  h1{font-size:22px}
+  .page-head{margin-bottom:12px!important}
+  .page-actions{display:none!important}
+  .stats-grid{grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+  .stat-card{padding:12px}
+  .stat-card .stat-num{font-size:28px}
+  .stepper{margin-bottom:16px}
+  .step-pending .step-label,.step-done .step-label{display:none}
+  .step{flex:0 0 auto}
+  .step-line{margin:0 6px;flex:1 1 16px}
+  .step-active .step-label strong{white-space:normal}
+  .tab-btn{padding:10px 14px}
+  .form-actionbar{margin:16px -16px -16px;padding:10px 12px;gap:6px}
+  .form-actionbar .btn{padding:8px 12px;flex:1 1 auto}
+  .ab-tabnav{width:100%;justify-content:space-between}
+  .ab-tabnav .btn{flex:0 0 auto}
+  .ab-spacer,.ab-long,.ab-label{display:none}
+  .toast{left:12px;right:12px;bottom:120px;max-width:none;text-align:center}
+  .form-control{min-height:44px}
+  textarea.form-control{min-height:88px}
+  [id^="lbl_f1vat_"]{padding:8px 10px!important;font-size:14px!important}
+  .modal-ribbon{max-height:45vh;overflow-y:auto}
+  .modal-header{gap:8px;padding:8px 12px}
+  .modal-header-title{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0}
+  .ribbon-toggle .rt-label,#zoomLabel,#pageInfo{display:none}
+  .modal-footer .btn{flex:1 1 auto}
+  .admin-modal,.lock-box{padding:28px 20px}
+  .org-info-grid{grid-template-columns:1fr}
+  #page-admin>div:first-child{position:static!important}
+  #page-admin>div:first-child>div:first-child{flex-wrap:wrap;gap:8px}
+  #page-admin h1{white-space:nowrap}
+  #page-admin .btn{white-space:nowrap}
+  .admin-quick{grid-template-columns:repeat(auto-fit,minmax(100px,1fr))}
+}
+/* ตารางรายการงาน → การ์ดบนจอเล็ก */
+@media (max-width:680px){
+  #page-jobs .data-table thead{display:none}
+  #page-jobs .data-table,#page-jobs .data-table tbody,#page-jobs .data-table tr,#page-jobs .data-table td{display:block;width:100%}
+  #page-jobs .data-table tr{border:1px solid var(--pea-border-light);border-radius:var(--radius-md);padding:10px 14px;margin-bottom:10px;background:var(--pea-surface)}
+  #page-jobs .data-table tr.empty-row{border:none;padding:0}
+  #page-jobs .data-table tr:hover td{background:none}
+  #page-jobs .data-table td{border:none;padding:5px 0;display:flex;justify-content:space-between;align-items:center;gap:12px;text-align:right}
+  #page-jobs .data-table td[data-label]::before{content:attr(data-label);color:var(--pea-text-muted);font-size:14px;text-align:left;flex-shrink:0}
+  #page-jobs .data-table td[data-label="#"]{display:none}
+  #page-jobs .data-table td.td-subject{max-width:none!important;white-space:normal!important;font-size:17px;font-weight:600;display:block;text-align:left;padding-bottom:8px;border-bottom:1px solid var(--pea-border-light);margin-bottom:4px}
+  #page-jobs .data-table td.td-subject::before{display:none}
+  #page-jobs .data-table td.td-actions>div{width:100%;justify-content:flex-end}
+  #page-jobs .data-table td.td-actions::before{display:none}
+  .jobs-filter .form-control{max-width:none!important;flex:1 1 140px}
+  .page-head .btn{width:100%}
+}
+@media print{.form-actionbar,.sidebar-backdrop,.nav-menu-btn{display:none!important}}
+</style>
 </head>
 <body>
 
@@ -367,23 +493,24 @@ input[type=number]{text-align:right}
 <nav class="nav" style="justify-content:space-between">
   <!-- โลโก้ + ชื่อ (ซ้าย) -->
   <div class="nav-logo">
+    <button type="button" class="nav-menu-btn" id="navMenuBtn" onclick="toggleSidebar()" aria-label="เปิด/ปิดเมนู" aria-expanded="false">☰</button>
     <img id="navLogo" src="" alt="กฟภ." style="height:60px;width:60px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 1px 3px rgba(0,0,0,.25))">
     <div>
-      <div style="font-size:20px;font-weight:700;letter-spacing:.3px;line-height:1.2">ระบบ e-Form จัดซื้อจัดจ้าง</div>
-      <div style="font-size:14px;opacity:.8;margin-top:2px">การไฟฟ้าส่วนภูมิภาค · วงเงินไม่เกิน ๑๐๐,๐๐๐ บาท</div>
+      <div class="nav-title-main" style="font-size:20px;font-weight:700;letter-spacing:.3px;line-height:1.2">ระบบ e-Form จัดซื้อจัดจ้าง</div>
+      <div class="nav-sub" style="font-size:14px;opacity:.8;margin-top:2px">การไฟฟ้าส่วนภูมิภาค · วงเงินไม่เกิน ๑๐๐,๐๐๐ บาท</div>
     </div>
   </div>
   <!-- ปุ่ม (ขวา) -->
   <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
     <button class="btn btn-secondary btn-sm" onclick="showPage('jobs')" style="border-color:rgba(255,255,255,.4);color:#fff;background:rgba(255,255,255,.12)">
-      📋 รายการงาน
+      📋 <span class="nav-btn-label">รายการงาน</span>
     </button>
     <button class="btn btn-primary btn-sm" onclick="newJob()" style="background:#fff;color:var(--pea-purple);font-weight:600">
-      + สร้างงานใหม่
+      + <span class="nav-btn-label">สร้างงานใหม่</span>
     </button>
     <button id="adminNavBtn" onclick="toggleAdminLogin()" title="โหมดผู้ดูแล"
       style="display:flex;align-items:center;gap:6px;padding:7px 16px;border:1px solid rgba(255,255,255,.4);border-radius:var(--radius-sm);background:rgba(255,255,255,.12);color:#fff;cursor:pointer;font-family:inherit;font-size:15px;font-weight:500;transition:.15s">
-      ⚙️ <span id="adminNavLabel">ผู้ดูแล</span>
+      ⚙️ <span id="adminNavLabel" class="nav-btn-label">ผู้ดูแล</span>
     </button>
   </div>
 </nav>
@@ -435,19 +562,21 @@ input[type=number]{text-align:right}
     </div>
   </div>
 </aside>
+<div class="sidebar-backdrop" onclick="closeSidebar()"></div>
 
 <!-- MAIN -->
 <main class="main">
 
 <!-- JOBS LIST -->
 <div class="page active" id="page-jobs">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+  <div class="page-head" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
     <div><h1>รายการงานทั้งหมด</h1><p class="subtitle">จัดการและแก้ไขงานจัดซื้อจัดจ้าง</p></div>
     <button class="btn btn-primary" onclick="newJob()">+ สร้างงานใหม่</button>
   </div>
+  <div class="stats-grid" id="statsGrid"></div>
   <div class="card">
-    <div style="display:flex;gap:10px;margin-bottom:16px">
-      <input class="form-control" style="max-width:300px" placeholder="🔍 ค้นหาชื่องาน..." id="searchInput" oninput="renderJobsList()">
+    <div class="jobs-filter" style="display:flex;gap:10px;margin-bottom:16px">
+      <input class="form-control" style="max-width:300px" placeholder="🔍 ค้นหาชื่องาน หรือเลขที่..." id="searchInput" oninput="renderJobsList()">
       <select class="form-control" style="max-width:160px" id="filterStatus" onchange="renderJobsList()">
         <option value="">ทุกสถานะ</option>
         <option value="draft">ร่าง</option>
@@ -459,7 +588,7 @@ input[type=number]{text-align:right}
     <div class="table-wrap">
       <table class="data-table">
         <thead>
-          <tr><th>#</th><th>เลขที่</th><th>รายการ/เรื่อง</th><th>วงเงิน (บาท)</th><th>วันที่</th><th>ขั้นตอน</th><th>จัดการ</th></tr>
+          <tr><th>#</th><th>เลขที่</th><th>รายการ/เรื่อง</th><th>วงเงิน (บาท)</th><th>สถานะ</th><th>วันที่</th><th>ขั้นตอน</th><th>จัดการ</th></tr>
         </thead>
         <tbody id="jobsTableBody"></tbody>
       </table>
@@ -469,9 +598,9 @@ input[type=number]{text-align:right}
 
 <!-- FORM 1 -->
 <div class="page" id="page-form1">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+  <div class="page-head" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
     <div><h1>๑. รายงานขอซื้อ/ขอจ้าง</h1><p class="subtitle">กรอกข้อมูลตามแบบฟอร์มรายงานขอซื้อหรือขอจ้างโดยวิธีเฉพาะเจาะจง</p></div>
-    <div style="display:flex;gap:8px">
+    <div class="page-actions" style="display:flex;gap:8px">
       <button class="btn btn-secondary btn-sm" onclick="previewForm(1)">👁 ดูตัวอย่าง</button>
       <button class="btn btn-primary btn-sm" onclick="saveForm(1)">💾 บันทึก</button>
     </div>
@@ -631,7 +760,7 @@ input[type=number]{text-align:right}
     </div>
   </div>
   <!-- Tab 3 -->
-  <div class="tab-pane active" id="t1-3">
+  <div class="tab-pane" id="t1-3">
     <div class="card">
       <div class="card-header"><span class="card-title">เจ้าหน้าที่/คณะกรรมการตรวจรับงานซื้อ/จ้าง</span></div>
       <div id="f1_committee_rows"></div>
@@ -681,9 +810,9 @@ input[type=number]{text-align:right}
 
 <!-- FORM 2 -->
 <div class="page" id="page-form2">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+  <div class="page-head" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
     <div><h1>๒. ขออนุมัติจัดซื้อ/จัดจ้าง</h1><p class="subtitle">รายงานผลการเจรจา ขออนุมัติ กรณีวงเงินไม่เกิน ๑๐๐,๐๐๐ บาท</p></div>
-    <div style="display:flex;gap:8px">
+    <div class="page-actions" style="display:flex;gap:8px">
       <button class="btn btn-secondary btn-sm" onclick="previewForm(2)">👁 ดูตัวอย่าง</button>
       <button class="btn btn-primary btn-sm" onclick="saveForm(2)">💾 บันทึก</button>
     </div>
@@ -779,9 +908,9 @@ input[type=number]{text-align:right}
 
 <!-- FORM 3 -->
 <div class="page" id="page-form3">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+  <div class="page-head" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
     <div><h1>๓. คณะกรรมการตรวจรับงาน</h1><p class="subtitle">รายงานผลการตรวจรับงานจัดซื้อ/จ้าง</p></div>
-    <div style="display:flex;gap:8px">
+    <div class="page-actions" style="display:flex;gap:8px">
       <button class="btn btn-secondary btn-sm" onclick="previewForm(3)">👁 ดูตัวอย่าง</button>
       <button class="btn btn-primary btn-sm" onclick="saveForm(3)">💾 บันทึก</button>
     </div>
@@ -904,6 +1033,8 @@ input[type=number]{text-align:right}
 
     <!-- Title Bar -->
     <div class="modal-header">
+      <span class="modal-header-title">📄 <span id="previewTitle">ตัวอย่างเอกสาร</span></span>
+      <button type="button" class="ribbon-toggle" onclick="toggleRibbon()">⚙️ <span class="rt-label">ตั้งค่าหน้ากระดาษ</span></button>
       <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
         <span style="font-size:11px;color:rgba(255,255,255,.7)" id="zoomLabel">100%</span>
         <button class="btn-close" onclick="closeModal()" title="ปิด (Esc)">✕</button>
@@ -1029,6 +1160,8 @@ input[type=number]{text-align:right}
     <!-- Footer status bar -->
     <div class="modal-footer">
       <span style="font-size:11px;color:#888;flex:1" id="pageInfo">A4 · TH SarabunIT๙ 16pt</span>
+      <button class="btn btn-success btn-sm" onclick="printPreview()">🖨️ พิมพ์ / PDF</button>
+      <button class="btn btn-warning btn-sm" onclick="wordFromPreview()">📄 Word</button>
       <button class="btn btn-secondary btn-sm" onclick="closeModal()">✕ ปิด</button>
     </div>
 
@@ -1038,7 +1171,7 @@ input[type=number]{text-align:right}
 <!-- ADMIN PAGE -->
 <div class="page" id="page-admin">
   <!-- Admin sticky nav bar -->
-  <div style="position:sticky;top:60px;z-index:50;background:var(--pea-bg);padding:12px 0 0;margin-bottom:16px">
+  <div style="position:sticky;top:var(--nav-h,76px);z-index:50;background:var(--pea-bg);padding:12px 0 0;margin-bottom:16px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <h1 style="display:flex;align-items:center;gap:10px;font-size:20px;margin:0">🛠️ จัดการระบบ <span class="admin-badge">👑 Admin</span></h1>
       <div style="display:flex;gap:6px;align-items:center">
@@ -1049,7 +1182,7 @@ input[type=number]{text-align:right}
     </div>
 
   <!-- Admin Quick Action Bar -->
-  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:8px">
+  <div class="admin-quick">
     <button onclick="switchAdminTab(0)" id="adm_quick_0"
       style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 6px;border:2px solid var(--pea-purple);border-radius:var(--radius-md);background:var(--pea-purple);color:#fff;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;transition:.15s">
       <span style="font-size:20px">🏢</span>ข้อมูลองค์กร
@@ -1575,7 +1708,7 @@ function numberToThai(num){
   return result;
 }
 function showToast(msg, type){
-  var colors={success:'#1a7a4a',error:'#c0392b',warn:'#C9922A',info:'#6B2C8F'};
+  var colors={success:'#1a7a4a',error:'#c0392b',warn:'#B85C00',info:'#6B2C8F'};
   var bg = colors[type]||colors.info;
   var t=document.getElementById('toast');
   if(!t)return;
@@ -2863,24 +2996,24 @@ function renderJobsList(){
   const statClass={draft:'badge-draft',pending:'badge-pending',approved:'badge-approved',complete:'badge-complete'};
   const body=document.getElementById('jobsTableBody');
   if(!body)return;
-  if(!filtered.length){body.innerHTML='<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--pea-text-muted)">ไม่พบรายการ</td></tr>';return;}
+  if(!filtered.length){body.innerHTML='<tr class="empty-row"><td colspan="8"><div class="empty-state">'+(jobs.length?'🔍 ไม่พบรายการที่ตรงกับการค้นหา':'<div style="font-size:40px">📂</div><div style="font-weight:600;color:var(--pea-text);font-size:18px">ยังไม่มีงานจัดซื้อจัดจ้าง</div><div>เริ่มจากสร้างงานใหม่ แล้วกรอกแบบที่ ๑ → ๒ → ๓ ตามลำดับ</div><button class="btn btn-primary" onclick="newJob()" style="margin-top:12px">+ สร้างงานใหม่</button>')+'</div></td></tr>';return;}
   body.innerHTML=filtered.map((j,i)=>`
     <tr>
-      <td>${toThaiNum(i+1)}</td>
-      <td>${j.docno||'-'}</td>
-      <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${j.subject}</td>
-      <td class="num">${j.forms?.form1?fmtMoney(calcTotals(j.forms.form1.items||[]).total):'-'}</td>
-      <td><span class="badge ${statClass[j.status]||'badge-draft'}">${statLabels[j.status]||j.status}</span></td>
-      <td>${j.date||''}</td>
-      <td>
+      <td data-label="#">${toThaiNum(i+1)}</td>
+      <td data-label="เลขที่">${j.docno||'-'}</td>
+      <td class="td-subject" data-label="เรื่อง" title="เปิดแก้ไข" onclick="openJob('${j.id}')" style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${j.subject}</td>
+      <td class="num" data-label="วงเงิน (บาท)">${j.forms?.form1?fmtMoney(calcTotals(j.forms.form1.items||[]).total):'-'}</td>
+      <td data-label="สถานะ"><span class="badge ${statClass[j.status]||'badge-draft'}">${statLabels[j.status]||j.status}</span></td>
+      <td data-label="วันที่">${j.date||''}</td>
+      <td data-label="ขั้นตอน">
         <div style="display:flex;gap:3px">
           ${[1,2,3].map(n=>`<span style="width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;background:${(j.step||0)>=n?'var(--pea-success)':'var(--pea-border-light)'};color:${(j.step||0)>=n?'#fff':'var(--pea-text-muted)'}">${n}</span>`).join('')}
         </div>
       </td>
-      <td>
+      <td class="td-actions" data-label="จัดการ">
         <div style="display:flex;gap:4px;flex-wrap:wrap">
           <button class="btn btn-secondary btn-sm" onclick="openJob('${j.id}')">แก้ไข</button>
-          <button class="btn btn-secondary btn-sm" onclick="deleteJob('${j.id}')">ลบ</button>
+          <button class="btn btn-secondary btn-sm" onclick="deleteJob('${j.id}')" style="color:var(--pea-danger)">ลบ</button>
         </div>
       </td>
     </tr>`).join('');
@@ -3058,18 +3191,23 @@ function renderDashboard(){
   });
   var sg=document.getElementById('statsGrid');
   if(sg)sg.innerHTML=[
-    {num:toUI(jobs.length),   label:'งานทั้งหมด',  icon:'📁', color:'#6B2C8F'},
-    {num:toUI(counts.draft||0),label:'ร่าง',        icon:'📝', color:'#888'},
+    {num:toUI(jobs.length),   label:'งานทั้งหมด',  icon:'📁', color:'#6B2C8F', f:''},
+    {num:toUI(counts.draft||0),label:'ร่าง',        icon:'📝', color:'#7A6B88', f:'draft'},
+    {num:toUI(counts.pending||0),label:'รออนุมัติ',  icon:'⏳', color:'#B85C00', f:'pending'},
+    {num:toUI(counts.approved||0),label:'อนุมัติแล้ว',icon:'✅', color:'#1A7A4A', f:'approved'},
   ].map(function(s){
     return '<div class="stat-card" style="cursor:pointer;border:1px solid var(--pea-border-light)" '+
-      'data-goto="jobs">'+
+      'data-goto="jobs" data-filter="'+s.f+'" tabindex="0" role="button">'+
       '<div class="stat-num" style="color:'+s.color+'">'+s.num+'</div>'+
       '<div class="stat-label">'+s.icon+' '+s.label+'</div>'+
     '</div>';
   }).join('');
   // bind click
   if(sg){sg.querySelectorAll('[data-goto]').forEach(function(el){
-    el.onclick=function(){showPage(this.getAttribute('data-goto'));};
+    var fs=document.getElementById('filterStatus');
+    el.classList.toggle('is-active', !!fs && fs.value===el.getAttribute('data-filter') && el.getAttribute('data-filter')!=='');
+    el.onclick=function(){if(fs)fs.value=this.getAttribute('data-filter')||'';showPage(this.getAttribute('data-goto'));};
+    el.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();this.onclick();}};
   });}
   const rj=document.getElementById('recentJobs');
   if(rj){
@@ -5177,7 +5315,7 @@ function initDatePreviews(){
 document.addEventListener('keydown', function(e){
   if((e.ctrlKey||e.metaKey) && e.key==='s'){
     e.preventDefault();
-    if(currentJob && currentJob.id){
+    if(document.querySelector('.page.active')){
       var page=document.querySelector('.page.active');
       if(page){
         var id=page.id;
@@ -5221,4 +5359,171 @@ document.addEventListener('DOMContentLoaded',()=>{
 }
 </style>
 </body>
+
+<script id="ux-refresh-js">
+/* ===== UX refresh 2026-10: เมนูมือถือ, แถบปุ่มฟอร์ม, ขั้นตอนคลิกได้, พรีวิวบนมือถือ ===== */
+(function(){
+  var MQ = window.matchMedia('(max-width: 900px)');
+  var TH = ['๑','๒','๓','๔','๕','๖'];
+
+  /* ---- เมนูด้านข้างแบบลิ้นชักบนมือถือ ---- */
+  window.toggleSidebar = function(force){
+    var open = (typeof force === 'boolean') ? force : !document.body.classList.contains('sidebar-open');
+    document.body.classList.toggle('sidebar-open', open);
+    var b = document.getElementById('navMenuBtn');
+    if(b) b.setAttribute('aria-expanded', open ? 'true' : 'false');
+  };
+  window.closeSidebar = function(){ window.toggleSidebar(false); };
+  MQ.addEventListener && MQ.addEventListener('change', function(){ window.closeSidebar(); });
+  document.addEventListener('keydown', function(e){
+    if(e.key !== 'Escape') return;
+    window.closeSidebar();
+    var m = document.getElementById('previewModal');
+    if(m && m.classList.contains('open') && typeof closeModal === 'function') closeModal();
+  });
+
+  /* ---- ย้ายหน้า Admin เข้าไปในพื้นที่หลัก (เดิมแสดงต่อท้ายใต้หน้าจอ) ---- */
+  var adminPage = document.getElementById('page-admin');
+  var mainEl = document.querySelector('main.main');
+  if(adminPage && mainEl && adminPage.parentNode !== mainEl) mainEl.appendChild(adminPage);
+
+  /* ---- แท็บของแบบที่ ๑ ---- */
+  function tabBtns(){ var t = document.getElementById('tabs1'); return t ? [].slice.call(t.querySelectorAll('.tab-btn')) : []; }
+  function curTab(){ var i = tabBtns().findIndex(function(b){ return b.classList.contains('active'); }); return i < 0 ? 0 : i; }
+  function updateProgress(){
+    var c = tabBtns().length, i = curTab();
+    var p = document.getElementById('abProgress1');
+    if(p) p.textContent = 'ส่วนที่ ' + TH[i] + ' / ' + TH[c-1];
+    var bar = document.getElementById('actionbar1');
+    if(!bar) return;
+    bar.querySelector('[data-act="prev"]').disabled = (i === 0);
+    bar.querySelector('[data-act="next"]').disabled = (i === c-1);
+  }
+  function stepTab(d){
+    var i = curTab() + d, c = tabBtns().length;
+    if(i < 0 || i >= c) return;
+    switchTab('tabs1', i);
+  }
+  var _switchTab = window.switchTab;
+  window.switchTab = function(id, idx){
+    _switchTab(id, idx);
+    if(id !== 'tabs1') return;
+    updateProgress();
+    var t = document.getElementById(id);
+    if(!t) return;
+    var navH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 76;
+    var top = t.getBoundingClientRect().top + window.scrollY - navH - 8;
+    if(window.scrollY > top) window.scrollTo({top: top, behavior: 'smooth'});
+    var a = t.querySelector('.tab-btn.active');
+    if(a) t.scrollTo({left: a.offsetLeft - (t.clientWidth - a.offsetWidth)/2, behavior: 'smooth'});
+  };
+
+  /* ---- แถบปุ่มลอยด้านล่างของแต่ละแบบฟอร์ม ---- */
+  function buildBar(n){
+    var page = document.getElementById('page-form'+n);
+    if(!page || page.querySelector('.form-actionbar')) return;
+    var bar = document.createElement('div');
+    bar.className = 'form-actionbar';
+    bar.id = 'actionbar'+n;
+    var h = '';
+    if(n === 1){
+      h += '<div class="ab-tabnav">'+
+             '<button type="button" class="btn btn-secondary" data-act="prev">‹ ก่อนหน้า</button>'+
+             '<span class="ab-progress" id="abProgress1"></span>'+
+             '<button type="button" class="btn btn-secondary" data-act="next">ถัดไป ›</button>'+
+           '</div>';
+    } else {
+      h += '<button type="button" class="btn btn-secondary" data-act="back">‹ แบบที่ '+TH[n-2]+'</button>';
+    }
+    h += '<span class="ab-spacer"></span>'+
+         '<button type="button" class="btn btn-secondary" data-act="preview" title="ดูตัวอย่าง / พิมพ์ / ส่งออก">👁 <span class="ab-label">ดูตัวอย่าง &amp; ส่งออก</span></button>'+
+         '<button type="button" class="btn btn-primary" data-act="save" title="บันทึก (Ctrl+S)">💾 บันทึก</button>';
+    if(n < 3) h += '<button type="button" class="btn btn-success" data-act="forward"><span class="ab-long">บันทึก แล้วไป</span>แบบที่ '+TH[n]+' ›</button>';
+    bar.innerHTML = h;
+    page.appendChild(bar);
+    bar.addEventListener('click', function(e){
+      var b = e.target.closest('[data-act]');
+      if(!b || b.disabled) return;
+      var a = b.getAttribute('data-act');
+      if(a === 'prev') stepTab(-1);
+      else if(a === 'next') stepTab(1);
+      else if(a === 'back') showPage('form'+(n-1));
+      else if(a === 'preview') previewForm(n);
+      else if(a === 'save') saveForm(n);
+      else if(a === 'forward'){ saveForm(n); showPage('form'+(n+1)); }
+    });
+  }
+  [1,2,3].forEach(buildBar);
+  updateProgress();
+
+  /* ---- ขั้นตอน ๑-๒-๓ คลิกเพื่อไปยังแบบฟอร์มได้ ---- */
+  var _renderStepper = window.renderStepper;
+  window.renderStepper = function(n){
+    _renderStepper(n);
+    var el = document.getElementById('stepper'+n);
+    if(!el) return;
+    el.querySelectorAll('.step').forEach(function(s, i){
+      if(i+1 === n){ s.setAttribute('aria-current', 'step'); return; }
+      s.setAttribute('role', 'button');
+      s.tabIndex = 0;
+      s.title = 'ไปที่แบบที่ ' + TH[i];
+      s.onclick = function(){ showPage('form'+(i+1)); };
+      s.onkeydown = function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); s.onclick(); } };
+    });
+  };
+  [1,2,3].forEach(function(n){ window.renderStepper(n); });
+
+  /* ---- เปลี่ยนหน้า: ปิดเมนู, เลื่อนขึ้นบนสุด, อัปเดตสถิติ ---- */
+  var _showPage = window.showPage;
+  window.showPage = function(p){
+    var r = _showPage.apply(this, arguments);
+    window.closeSidebar();
+    if(p === 'jobs' && typeof renderDashboard === 'function') renderDashboard();
+    if(p === 'form1') updateProgress();
+    window.scrollTo(0, 0);
+    return r;
+  };
+
+  /* ---- พรีวิว: ชื่อเอกสาร, ซ่อนแถบตั้งค่าบนมือถือ, ย่อให้พอดีจอ, ปุ่มปิดใช้งานได้ ---- */
+  window.toggleRibbon = function(){
+    var rb = document.getElementById('previewRibbon');
+    if(rb) rb.classList.toggle('collapsed');
+  };
+  window.printPreview = function(){
+    var ifr = document.querySelector('#previewBody iframe');
+    if(ifr && ifr.contentWindow) ifr.contentWindow.print();
+    else printForm(currentPreviewForm || 1);
+  };
+  window.wordFromPreview = function(){ exportWord(currentPreviewForm || 1); };
+  function fitPreview(ifr){
+    try{
+      var d = ifr.contentDocument, w = ifr.contentWindow;
+      d.querySelectorAll('.tbar-btn').forEach(function(b){
+        if(/ปิด/.test(b.textContent)) b.onclick = function(){ closeModal(); };
+      });
+      if(MQ.matches && typeof w.setZoom === 'function'){
+        var z = Math.floor((ifr.clientWidth - 56) / 794 * 100);
+        w.setZoom(Math.max(40, Math.min(100, z)));
+      }
+    }catch(e){}
+  }
+  var _previewForm = window.previewForm;
+  window.previewForm = function(n){
+    currentPreviewForm = n;
+    var r = _previewForm.apply(this, arguments);
+    var rb = document.getElementById('previewRibbon');
+    if(rb) rb.classList.toggle('collapsed', MQ.matches);
+    var ifr = document.querySelector('#previewBody iframe');
+    if(ifr){
+      ifr.addEventListener('load', function(){ setTimeout(function(){ fitPreview(ifr); }, 150); });
+    }
+    return r;
+  };
+
+  /* ---- แสดงรายการงานทันทีเมื่อเปิดหน้า (เดิมตารางว่างจนกว่าจะกดเมนู) ---- */
+  document.addEventListener('DOMContentLoaded', function(){
+    if(typeof renderJobsList === 'function') renderJobsList();
+  });
+})();
+</script>
 </html>
