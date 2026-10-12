@@ -356,6 +356,10 @@ input[type=number]{text-align:right}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth.js/1.6.0/mammoth.browser.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js"></script>
+<script type="module">
+  import Keycloak from 'https://cdn.jsdelivr.net/npm/keycloak-js@26.0.0/lib/keycloak.js';
+  window.Keycloak = Keycloak;
+</script>
 </head>
 <body>
 
@@ -1382,11 +1386,14 @@ input[type=number]{text-align:right}
   <div class="lock-box">
     <div style="font-size:48px;margin-bottom:8px">🔐</div>
     <h2>ผู้ดูแลระบบ</h2>
+    <div style="margin-bottom:16px">
+      <button class="btn btn-primary" id="keycloakLoginBtn" style="width:100%" onclick="loginWithKeycloak()" disabled>🔐 เข้าสู่ระบบด้วย Keycloak</button>
+    </div>
     <div id="passkeyLoginSection" style="display:none;margin-bottom:16px">
       <button class="btn btn-primary" style="width:100%" onclick="loginWithPasskey()">👆 เข้าสู่ระบบด้วย Passkey</button>
-      <div style="display:flex;align-items:center;gap:8px;margin:14px 0;color:#aaa;font-size:12px">
-        <div style="flex:1;height:1px;background:#e0e0e0"></div>หรือ<div style="flex:1;height:1px;background:#e0e0e0"></div>
-      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin:14px 0;color:#aaa;font-size:12px">
+      <div style="flex:1;height:1px;background:#e0e0e0"></div>หรือ<div style="flex:1;height:1px;background:#e0e0e0"></div>
     </div>
     <p>กรุณากรอกรหัสผ่านเพื่อเข้าสู่โหมดผู้ดูแล</p>
     <input class="form-control" type="password" id="admin_pass_input"
@@ -3884,7 +3891,7 @@ function doAdminLogin(){
   var pass = document.getElementById('admin_pass_input').value;
   if(!pass){ showToast('⚠️ กรุณากรอกรหัสผ่าน'); return; }
   if(simpleHash(pass) === getAdminPass()){
-    grantAdminAccess('✅ เข้าสู่โหมดผู้ดูแลระบบแล้ว');
+    grantAdminAccess('✅ เข้าสู่โหมดผู้ดูแลระบบแล้ว', 'password');
   } else {
     document.getElementById('admin_pass_input').value='';
     document.getElementById('admin_pass_input').style.borderColor='#e74c3c';
@@ -3895,8 +3902,10 @@ function doAdminLogin(){
     showToast('❌ รหัสผ่านไม่ถูกต้อง');
   }
 }
-function grantAdminAccess(message){
+var adminAuthMethod = null;
+function grantAdminAccess(message, method){
   isAdminMode = true;
+  adminAuthMethod = method || 'password';
   closeAdminLogin();
   activateAdminUI();
   showPage('admin');
@@ -3989,7 +3998,7 @@ function loginWithPasskey(){
     var flags = authData[32];
     var userVerified = !!(flags & 0x04);
     if(assertion.id === credId && userVerified){
-      grantAdminAccess('✅ เข้าสู่โหมดผู้ดูแลระบบด้วย Passkey แล้ว');
+      grantAdminAccess('✅ เข้าสู่โหมดผู้ดูแลระบบด้วย Passkey แล้ว', 'passkey');
     } else {
       showToast('❌ ยืนยันตัวตนด้วย Passkey ไม่สำเร็จ');
     }
@@ -3997,10 +4006,49 @@ function loginWithPasskey(){
     showToast('❌ เข้าสู่ระบบด้วย Passkey ไม่สำเร็จ: ' + err.message);
   });
 }
+
+// ---- Keycloak (OIDC SSO) ----
+// หมายเหตุ: url นี้ชี้ไปยัง Keycloak ที่รันในเครื่อง (localhost) สำหรับพัฒนา/ทดสอบเท่านั้น
+// เมื่อ Keycloak ถูกย้ายไปขึ้นเซิร์ฟเวอร์ที่มี public URL แล้ว ให้เปลี่ยนค่า url ด้านล่างนี้
+var KEYCLOAK_CONFIG = {
+  url: 'http://localhost:8082',
+  realm: 'pea-eform',
+  clientId: 'pea-eform-web'
+};
+var keycloakClient = null;
+function initKeycloak(){
+  if(typeof Keycloak === 'undefined'){
+    console.warn('keycloak-js โหลดไม่สำเร็จ (อาจเป็นเพราะออฟไลน์)');
+    return;
+  }
+  keycloakClient = new Keycloak(KEYCLOAK_CONFIG);
+  keycloakClient.init({ onLoad:'check-sso', pkceMethod:'S256', checkLoginIframe:false })
+    .then(function(authenticated){
+      var btn = document.getElementById('keycloakLoginBtn');
+      if(btn) btn.disabled = false;
+      if(authenticated && !isAdminMode){
+        var username = (keycloakClient.tokenParsed && keycloakClient.tokenParsed.preferred_username) || 'ผู้ใช้';
+        grantAdminAccess('✅ เข้าสู่โหมดผู้ดูแลระบบด้วย Keycloak แล้ว (' + username + ')', 'keycloak');
+      }
+    })
+    .catch(function(err){
+      console.warn('Keycloak init ไม่สำเร็จ (เซิร์ฟเวอร์อาจไม่พร้อมใช้งาน):', err);
+    });
+}
+function loginWithKeycloak(){
+  if(!keycloakClient){ showToast('⚠️ เชื่อมต่อ Keycloak ไม่สำเร็จ ลองใหม่อีกครั้ง'); return; }
+  keycloakClient.login({ redirectUri: window.location.href.split('#')[0] });
+}
 function adminLogout(){
   isAdminMode = false;
   deactivateAdminUI();
   showPage('jobs');
+  if(adminAuthMethod === 'keycloak' && keycloakClient && keycloakClient.authenticated){
+    adminAuthMethod = null;
+    keycloakClient.logout({ redirectUri: window.location.href.split('#')[0] });
+    return;
+  }
+  adminAuthMethod = null;
   showToast('🔓 ออกจากโหมดผู้ดูแลแล้ว');
 }
 function activateAdminUI(){
@@ -4951,6 +4999,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   updateFormSelects();
   const today=new Date().toISOString().split('T')[0];
   sv('f1_date',today);sv('f2_date',today);sv('f3_date',today);
+  initKeycloak();
 });
 </script>
 <style>
