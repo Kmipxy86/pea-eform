@@ -1031,50 +1031,6 @@ input[type=number]{text-align:right}
   </div>
 </div>
 
-<!-- ADMIN LOGIN -->
-<div class="admin-overlay" id="adminLoginOverlay">
-  <div class="admin-modal">
-    <h2>🔐 เข้าสู่โหมดผู้ดูแล</h2>
-    <p>กรอก PIN 4 หลักเพื่อเข้าใช้งานโหมดผู้ดูแลระบบ</p>
-    <div class="admin-pin-row">
-      <input type="password" maxlength="1" id="pin1" oninput="pinNext(1)" onkeydown="pinKey(event,1)">
-      <input type="password" maxlength="1" id="pin2" oninput="pinNext(2)" onkeydown="pinKey(event,2)">
-      <input type="password" maxlength="1" id="pin3" oninput="pinNext(3)" onkeydown="pinKey(event,3)">
-      <input type="password" maxlength="1" id="pin4" oninput="pinNext(4)" onkeydown="pinKey(event,4)">
-    </div>
-    <div id="pinError" style="color:#C0392B;font-size:13px;text-align:center;min-height:20px;margin-bottom:12px"></div>
-    <div style="display:flex;gap:10px">
-      <button class="btn btn-secondary" style="flex:1" onclick="closeAdminLogin()">ยกเลิก</button>
-      <button class="btn btn-primary" style="flex:1" onclick="checkPin()">เข้าสู่ระบบ</button>
-    </div>
-  </div>
-</div>
-
-<!-- CHANGE PIN MODAL -->
-<div class="admin-overlay" id="changePinOverlay">
-  <div class="admin-modal">
-    <h2>🔑 เปลี่ยน PIN</h2>
-    <p>กรอก PIN ปัจจุบัน และ PIN ใหม่</p>
-    <div style="margin-bottom:12px">
-      <label class="form-label">PIN ปัจจุบัน</label>
-      <input class="form-control" type="password" id="oldPin" maxlength="4" placeholder="PIN เดิม">
-    </div>
-    <div style="margin-bottom:12px">
-      <label class="form-label">PIN ใหม่ (4 หลัก)</label>
-      <input class="form-control" type="password" id="newPin1" maxlength="4" placeholder="PIN ใหม่">
-    </div>
-    <div style="margin-bottom:20px">
-      <label class="form-label">ยืนยัน PIN ใหม่</label>
-      <input class="form-control" type="password" id="newPin2" maxlength="4" placeholder="ยืนยัน PIN">
-    </div>
-    <div id="changePinMsg" style="font-size:13px;text-align:center;min-height:20px;margin-bottom:12px"></div>
-    <div style="display:flex;gap:10px">
-      <button class="btn btn-secondary" style="flex:1" onclick="document.getElementById('changePinOverlay').classList.remove('open')">ยกเลิก</button>
-      <button class="btn btn-primary" style="flex:1" onclick="changePin()">บันทึก PIN ใหม่</button>
-    </div>
-  </div>
-</div>
-
 <!-- ADMIN PAGE -->
 <div class="page" id="page-admin">
   <!-- Admin sticky nav bar -->
@@ -1395,6 +1351,15 @@ input[type=number]{text-align:right}
       <button class="btn btn-primary" onclick="changeAdminPassword()">🔑 เปลี่ยนรหัสผ่าน</button>
     </div>
     <div class="admin-card" style="margin-top:16px">
+      <div class="admin-section-title">👆 เข้าสู่ระบบด้วย Passkey (ลายนิ้วมือ / Touch ID / Windows Hello)</div>
+      <p style="font-size:13px;color:var(--pea-text-muted);margin:0 0 12px">ผูก Passkey กับอุปกรณ์เครื่องนี้ ใช้แทนการพิมพ์รหัสผ่านตอนเข้าสู่โหมดผู้ดูแล ยังใช้รหัสผ่านสำรองได้เสมอหากไม่มีอุปกรณ์นี้</p>
+      <div id="passkeyStatus" style="font-size:13px;margin-bottom:12px"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-secondary" id="passkeyRegisterBtn" onclick="registerPasskey()">👆 ลงทะเบียน Passkey กับเครื่องนี้</button>
+        <button class="btn btn-danger" id="passkeyRemoveBtn" onclick="removePasskey()" style="display:none">🗑️ ลบ Passkey</button>
+      </div>
+    </div>
+    <div class="admin-card" style="margin-top:16px">
       <div class="admin-section-title">🗑️ จัดการข้อมูล</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <button class="btn btn-secondary" onclick="exportAllData()">📤 Export ข้อมูลทั้งหมด (JSON)</button>
@@ -1417,6 +1382,12 @@ input[type=number]{text-align:right}
   <div class="lock-box">
     <div style="font-size:48px;margin-bottom:8px">🔐</div>
     <h2>ผู้ดูแลระบบ</h2>
+    <div id="passkeyLoginSection" style="display:none;margin-bottom:16px">
+      <button class="btn btn-primary" style="width:100%" onclick="loginWithPasskey()">👆 เข้าสู่ระบบด้วย Passkey</button>
+      <div style="display:flex;align-items:center;gap:8px;margin:14px 0;color:#aaa;font-size:12px">
+        <div style="flex:1;height:1px;background:#e0e0e0"></div>หรือ<div style="flex:1;height:1px;background:#e0e0e0"></div>
+      </div>
+    </div>
     <p>กรุณากรอกรหัสผ่านเพื่อเข้าสู่โหมดผู้ดูแล</p>
     <input class="form-control" type="password" id="admin_pass_input"
       placeholder="รหัสผ่าน..."
@@ -3900,6 +3871,8 @@ function getAdminPass(){ return localStorage.getItem(ADMIN_PASS_KEY)||DEFAULT_HA
 // ---- Login / Logout ----
 function toggleAdminLogin(){
   if(isAdminMode){ adminLogout(); return; }
+  var passkeySection = document.getElementById('passkeyLoginSection');
+  passkeySection.style.display = (isWebAuthnSupported() && hasPasskey()) ? 'block' : 'none';
   document.getElementById('admin-login-overlay').style.display='flex';
   setTimeout(function(){var el=document.getElementById('admin_pass_input');if(el)el.focus();},100);
 }
@@ -3911,11 +3884,7 @@ function doAdminLogin(){
   var pass = document.getElementById('admin_pass_input').value;
   if(!pass){ showToast('⚠️ กรุณากรอกรหัสผ่าน'); return; }
   if(simpleHash(pass) === getAdminPass()){
-    isAdminMode = true;
-    closeAdminLogin();
-    activateAdminUI();
-    showPage('admin');
-    showToast('✅ เข้าสู่โหมดผู้ดูแลระบบแล้ว');
+    grantAdminAccess('✅ เข้าสู่โหมดผู้ดูแลระบบแล้ว');
   } else {
     document.getElementById('admin_pass_input').value='';
     document.getElementById('admin_pass_input').style.borderColor='#e74c3c';
@@ -3925,6 +3894,108 @@ function doAdminLogin(){
     },2000);
     showToast('❌ รหัสผ่านไม่ถูกต้อง');
   }
+}
+function grantAdminAccess(message){
+  isAdminMode = true;
+  closeAdminLogin();
+  activateAdminUI();
+  showPage('admin');
+  showToast(message);
+}
+
+// ---- Passkey (WebAuthn) ----
+var PASSKEY_CRED_KEY = 'pea_admin_passkey';
+
+function isWebAuthnSupported(){
+  return !!(window.PublicKeyCredential && navigator.credentials);
+}
+function hasPasskey(){
+  return !!localStorage.getItem(PASSKEY_CRED_KEY);
+}
+function bufToBase64url(buf){
+  var bytes = new Uint8Array(buf), str = '';
+  for(var i=0;i<bytes.byteLength;i++) str += String.fromCharCode(bytes[i]);
+  return btoa(str).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function base64urlToBuf(b64url){
+  var b64 = b64url.replace(/-/g,'+').replace(/_/g,'/');
+  while(b64.length % 4) b64 += '=';
+  var str = atob(b64), bytes = new Uint8Array(str.length);
+  for(var i=0;i<str.length;i++) bytes[i] = str.charCodeAt(i);
+  return bytes.buffer;
+}
+function randomBuf(len){
+  var b = new Uint8Array(len);
+  crypto.getRandomValues(b);
+  return b;
+}
+function updatePasskeyUI(){
+  var statusEl = document.getElementById('passkeyStatus');
+  var registerBtn = document.getElementById('passkeyRegisterBtn');
+  var removeBtn = document.getElementById('passkeyRemoveBtn');
+  if(!statusEl) return;
+  if(!isWebAuthnSupported()){
+    statusEl.innerHTML = '⚠️ เบราว์เซอร์/อุปกรณ์นี้ไม่รองรับ Passkey';
+    registerBtn.style.display = 'none';
+    removeBtn.style.display = 'none';
+    return;
+  }
+  if(hasPasskey()){
+    statusEl.innerHTML = '✅ ลงทะเบียน Passkey กับเครื่องนี้แล้ว';
+    registerBtn.textContent = '👆 ลงทะเบียน Passkey ใหม่ (แทนที่อันเดิม)';
+    removeBtn.style.display = 'inline-block';
+  } else {
+    statusEl.innerHTML = 'ยังไม่ได้ลงทะเบียน Passkey กับเครื่องนี้';
+    registerBtn.textContent = '👆 ลงทะเบียน Passkey กับเครื่องนี้';
+    removeBtn.style.display = 'none';
+  }
+}
+function registerPasskey(){
+  if(!isWebAuthnSupported()){ showToast('⚠️ เบราว์เซอร์นี้ไม่รองรับ Passkey'); return; }
+  navigator.credentials.create({
+    publicKey: {
+      challenge: randomBuf(32),
+      rp: { name: 'ระบบ e-Form จัดซื้อจัดจ้าง กฟภ.' },
+      user: { id: randomBuf(16), name: 'admin', displayName: 'ผู้ดูแลระบบ' },
+      pubKeyCredParams: [{ type:'public-key', alg:-7 }, { type:'public-key', alg:-257 }],
+      authenticatorSelection: { authenticatorAttachment:'platform', userVerification:'required' },
+      timeout: 60000
+    }
+  }).then(function(cred){
+    localStorage.setItem(PASSKEY_CRED_KEY, bufToBase64url(cred.rawId));
+    updatePasskeyUI();
+    showToast('✅ ลงทะเบียน Passkey สำเร็จ');
+  }).catch(function(err){
+    showToast('❌ ลงทะเบียน Passkey ไม่สำเร็จ: ' + err.message);
+  });
+}
+function removePasskey(){
+  localStorage.removeItem(PASSKEY_CRED_KEY);
+  updatePasskeyUI();
+  showToast('🗑️ ลบ Passkey แล้ว');
+}
+function loginWithPasskey(){
+  var credId = localStorage.getItem(PASSKEY_CRED_KEY);
+  if(!credId){ showToast('⚠️ ยังไม่ได้ลงทะเบียน Passkey'); return; }
+  navigator.credentials.get({
+    publicKey: {
+      challenge: randomBuf(32),
+      allowCredentials: [{ id: base64urlToBuf(credId), type:'public-key' }],
+      userVerification: 'required',
+      timeout: 60000
+    }
+  }).then(function(assertion){
+    var authData = new Uint8Array(assertion.response.authenticatorData);
+    var flags = authData[32];
+    var userVerified = !!(flags & 0x04);
+    if(assertion.id === credId && userVerified){
+      grantAdminAccess('✅ เข้าสู่โหมดผู้ดูแลระบบด้วย Passkey แล้ว');
+    } else {
+      showToast('❌ ยืนยันตัวตนด้วย Passkey ไม่สำเร็จ');
+    }
+  }).catch(function(err){
+    showToast('❌ เข้าสู่ระบบด้วย Passkey ไม่สำเร็จ: ' + err.message);
+  });
 }
 function adminLogout(){
   isAdminMode = false;
@@ -3973,6 +4044,7 @@ function loadAdminPage(){
   loadDefaultSettings();
   renderFieldLists();
   initListManagers();
+  updatePasskeyUI();
 }
 
 // ---- Org Settings ----
